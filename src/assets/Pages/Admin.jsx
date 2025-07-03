@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Link, useLocation, useNavigate, Routes, Route } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import './Admin';
 
 // Mock API function
@@ -29,6 +29,37 @@ const apiRequest = async (method, endpoint, data = null) => {
   } catch (error) {
     throw new Error(error.message);
   }
+};
+
+// Authentication functions
+const loginUser = async (credentials) => {
+  return new Promise((resolve, reject) => {
+    setTimeout(() => {
+      if ((credentials.email === 'admin@pregvita.com' && credentials.password === 'admin123') || 
+          (credentials.email === 'muhammedalhassan815@gmail.com' && credentials.password === 'hajji 815')) {
+        const token = 'mock-jwt-token';
+        localStorage.setItem('token', token);
+        resolve({ 
+          token, 
+          user: {
+            name: "Dr. Sarah Johnson",
+            role: "admin",
+            avatar: "https://images.unsplash.com/photo-1582750433449-648ed127bb54?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=400&h=400"
+          }
+        });
+      } else {
+        reject(new Error('Invalid credentials'));
+      }
+    }, 500);
+  });
+};
+
+const logoutUser = () => {
+  localStorage.removeItem('token');
+};
+
+const checkAuth = () => {
+  return !!localStorage.getItem('token');
 };
 
 // Mock data functions
@@ -187,27 +218,6 @@ const fetchAppointments = () => [
   }
 ];
 
-const fetchClinics = () => [
-  {
-    id: 1,
-    name: "Downtown Women's Health",
-    address: "123 Main St, Suite 200, New York, NY 10001",
-    phone: "+1 212-555-1000",
-    email: "downtown@example.com",
-    hours: "Mon-Fri: 8am-6pm, Sat: 9am-1pm",
-    doctors: ["Dr. Sarah Johnson", "Dr. Michael Chen"]
-  },
-  {
-    id: 2,
-    name: "Westside OB/GYN",
-    address: "456 Broadway, Suite 300, New York, NY 10003",
-    phone: "+1 212-555-2000",
-    email: "westside@example.com",
-    hours: "Mon-Fri: 9am-5pm",
-    doctors: ["Dr. Lisa Wong", "Dr. Amanda Smith"]
-  }
-];
-
 const fetchBlogPosts = () => [
   {
     id: 1,
@@ -216,7 +226,8 @@ const fetchBlogPosts = () => [
     date: "2023-05-15",
     category: "Nutrition",
     status: "published",
-    views: 1245
+    views: 1245,
+    content: "Proper nutrition during pregnancy is essential for the health of both mother and baby. This article covers the key nutrients needed during each trimester."
   },
   {
     id: 2,
@@ -225,7 +236,8 @@ const fetchBlogPosts = () => [
     date: "2023-05-10",
     category: "Fitness",
     status: "published",
-    views: 987
+    views: 987,
+    content: "Staying active during pregnancy has numerous benefits. Learn which exercises are safe and recommended for each stage of pregnancy."
   },
   {
     id: 3,
@@ -234,7 +246,8 @@ const fetchBlogPosts = () => [
     date: "2023-05-05",
     category: "Health",
     status: "draft",
-    views: 0
+    views: 0,
+    content: "Prenatal vitamins play a crucial role in filling nutritional gaps. This guide explains what to look for in a prenatal vitamin."
   },
   {
     id: 4,
@@ -243,7 +256,8 @@ const fetchBlogPosts = () => [
     date: "2023-04-28",
     category: "Labor & Delivery",
     status: "published",
-    views: 1567
+    views: 1567,
+    content: "A comprehensive guide to the stages of labor, pain management options, and what to pack in your hospital bag."
   }
 ];
 
@@ -284,28 +298,32 @@ const fetchHealthHub = () => [
     title: "Pregnancy Week by Week",
     category: "Pregnancy",
     status: "published",
-    lastUpdated: "2023-05-10"
+    lastUpdated: "2023-05-10",
+    content: "Detailed guide to fetal development and maternal changes during each week of pregnancy."
   },
   {
     id: 2,
     title: "Newborn Care Guide",
     category: "Postpartum",
     status: "published",
-    lastUpdated: "2023-04-25"
+    lastUpdated: "2023-04-25",
+    content: "Essential information for new parents on feeding, diapering, bathing, and caring for your newborn."
   },
   {
     id: 3,
     title: "Breastfeeding Basics",
     category: "Postpartum",
     status: "published",
-    lastUpdated: "2023-04-15"
+    lastUpdated: "2023-04-15",
+    content: "Comprehensive guide to breastfeeding techniques, positions, and troubleshooting common issues."
   },
   {
     id: 4,
     title: "Managing Morning Sickness",
     category: "Pregnancy",
     status: "draft",
-    lastUpdated: "2023-05-18"
+    lastUpdated: "2023-05-18",
+    content: "Tips and remedies for dealing with nausea and vomiting during pregnancy."
   }
 ];
 
@@ -383,36 +401,83 @@ const fetchSettings = () => ({
   emergencyContact: "+1 212-555-9111"
 });
 
-const fetchPages = () => [
-  {
-    id: 1,
-    title: "Home",
-    slug: "home",
-    status: "published",
-    lastUpdated: "2023-05-10"
-  },
-  {
-    id: 2,
-    title: "About Us",
-    slug: "about",
-    status: "published",
-    lastUpdated: "2023-04-15"
-  },
-  {
-    id: 3,
-    title: "Services",
-    slug: "services",
-    status: "published",
-    lastUpdated: "2023-03-20"
-  },
-  {
-    id: 4,
-    title: "Contact",
-    slug: "contact",
-    status: "draft",
-    lastUpdated: "2023-05-18"
-  }
-];
+// Login Modal Component
+const LoginModal = ({ onLogin, onClose }) => {
+  const [credentials, setCredentials] = useState({
+    email: '',
+    password: ''
+  });
+  const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setCredentials(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError('');
+    setIsLoading(true);
+    
+    try {
+      await onLogin(credentials);
+      onClose();
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <div className="ali-modal-overlay">
+      <div className="ali-modal">
+        <div className="ali-modal-header">
+          <h2>Admin Login</h2>
+          <button className="ali-modal-close" onClick={onClose}>
+            <i className="fas fa-times"></i>
+          </button>
+        </div>
+        <div className="ali-modal-body">
+          <form onSubmit={handleSubmit}>
+            <div className="ali-form-group">
+              <label>Email</label>
+              <input
+                type="email"
+                name="email"
+                value={credentials.email}
+                onChange={handleChange}
+                required
+              />
+            </div>
+            <div className="ali-form-group">
+              <label>Password</label>
+              <input
+                type="password"
+                name="password"
+                value={credentials.password}
+                onChange={handleChange}
+                required
+              />
+            </div>
+            {error && <div className="ali-form-error">{error}</div>}
+            <button 
+              type="submit" 
+              className="ali-btn ali-btn-primary"
+              disabled={isLoading}
+            >
+              {isLoading ? 'Logging in...' : 'Login'}
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 // Analytics Page Component
 const AnalyticsPage = () => {
@@ -420,6 +485,36 @@ const AnalyticsPage = () => {
     queryKey: ['dashboard', 'stats'],
     queryFn: fetchStats,
   });
+
+  const [timeRange, setTimeRange] = useState('monthly');
+  const [chartData, setChartData] = useState(null);
+
+  useEffect(() => {
+    // Generate mock chart data based on time range
+    const generateChartData = () => {
+      if (timeRange === 'weekly') {
+        return {
+          labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
+          patientData: [120, 190, 150, 220],
+          appointmentData: [80, 120, 90, 140]
+        };
+      } else if (timeRange === 'monthly') {
+        return {
+          labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+          patientData: [320, 290, 350, 420, 380, 450],
+          appointmentData: [280, 320, 290, 340, 310, 380]
+        };
+      } else {
+        return {
+          labels: ['Q1', 'Q2', 'Q3', 'Q4'],
+          patientData: [920, 1090, 1150, 1220],
+          appointmentData: [780, 920, 890, 1040]
+        };
+      }
+    };
+
+    setChartData(generateChartData());
+  }, [timeRange]);
 
   return (
     <div className="ali-page-content">
@@ -430,32 +525,95 @@ const AnalyticsPage = () => {
         </div>
       </div>
 
+      <div className="ali-analytics-tools">
+        <div className="ali-filter-group">
+          <label>Time Range:</label>
+          <select value={timeRange} onChange={(e) => setTimeRange(e.target.value)}>
+            <option value="weekly">Weekly</option>
+            <option value="monthly">Monthly</option>
+            <option value="quarterly">Quarterly</option>
+          </select>
+        </div>
+        <button className="ali-btn ali-btn-primary">
+          <i className="fas fa-download"></i>
+          Export Data
+        </button>
+      </div>
+
       <div className="ali-analytics-grid">
         <div className="ali-analytics-card ali-wide">
           <h3>Patient Growth</h3>
-          <div className="ali-chart-placeholder">
-            <i className="fas fa-chart-line"></i>
-            <p>Monthly patient registration trends</p>
+          <div className="ali-chart-container">
+            {chartData && (
+              <div className="ali-chart">
+                <div className="ali-chart-legend">
+                  <div className="ali-legend-item">
+                    <span className="ali-legend-color ali-patient"></span>
+                    <span>New Patients</span>
+                  </div>
+                  <div className="ali-legend-item">
+                    <span className="ali-legend-color ali-appointment"></span>
+                    <span>Appointments</span>
+                  </div>
+                </div>
+                <div className="ali-chart-bars">
+                  {chartData.labels.map((label, index) => (
+                    <div key={index} className="ali-chart-bar-group">
+                      <div className="ali-chart-label">{label}</div>
+                      <div className="ali-chart-bars-container">
+                        <div 
+                          className="ali-chart-bar ali-patient" 
+                          style={{ height: `${chartData.patientData[index] / 20}%` }}
+                          title={`${chartData.patientData[index]} patients`}
+                        ></div>
+                        <div 
+                          className="ali-chart-bar ali-appointment" 
+                          style={{ height: `${chartData.appointmentData[index] / 20}%` }}
+                          title={`${chartData.appointmentData[index]} appointments`}
+                        ></div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
         <div className="ali-analytics-card">
           <h3>Appointment Types</h3>
-          <div className="ali-chart-placeholder ali-pie">
-            <i className="fas fa-chart-pie"></i>
-            <p>Breakdown of appointment types</p>
+          <div className="ali-chart-container">
+            <div className="ali-pie-chart">
+              <div className="ali-pie-slice" style={{ '--percentage': '40%', '--color': '#4e73df' }}></div>
+              <div className="ali-pie-slice" style={{ '--percentage': '25%', '--color': '#1cc88a' }}></div>
+              <div className="ali-pie-slice" style={{ '--percentage': '15%', '--color': '#36b9cc' }}></div>
+              <div className="ali-pie-slice" style={{ '--percentage': '20%', '--color': '#f6c23e' }}></div>
+              <div className="ali-pie-center">
+                <div className="ali-pie-total">100%</div>
+              </div>
+            </div>
+            <div className="ali-pie-legend">
+              <div className="ali-legend-item">
+                <span className="ali-legend-color" style={{ backgroundColor: '#4e73df' }}></span>
+                <span>Prenatal (40%)</span>
+              </div>
+              <div className="ali-legend-item">
+                <span className="ali-legend-color" style={{ backgroundColor: '#1cc88a' }}></span>
+                <span>Ultrasound (25%)</span>
+              </div>
+              <div className="ali-legend-item">
+                <span className="ali-legend-color" style={{ backgroundColor: '#36b9cc' }}></span>
+                <span>Emergency (15%)</span>
+              </div>
+              <div className="ali-legend-item">
+                <span className="ali-legend-color" style={{ backgroundColor: '#f6c23e' }}></span>
+                <span>Other (20%)</span>
+              </div>
+            </div>
           </div>
         </div>
 
         <div className="ali-analytics-card">
-          <h3>Clinic Utilization</h3>
-          <div className="ali-chart-placeholder">
-            <i className="fas fa-clinic-medical"></i>
-            <p>Appointments by clinic location</p>
-          </div>
-        </div>
-
-        <div className="ali-analytics-card ali-wide">
           <h3>Engagement Metrics</h3>
           <div className="ali-metrics-grid">
             <div className="ali-metric-item">
@@ -479,9 +637,43 @@ const AnalyticsPage = () => {
 
         <div className="ali-analytics-card ali-wide">
           <h3>Content Performance</h3>
-          <div className="ali-chart-placeholder">
-            <i className="fas fa-newspaper"></i>
-            <p>Blog post views and engagement</p>
+          <div className="ali-content-stats">
+            <table>
+              <thead>
+                <tr>
+                  <th>Content Type</th>
+                  <th>Published</th>
+                  <th>Views</th>
+                  <th>Engagement Rate</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Blog Posts</td>
+                  <td>12</td>
+                  <td>5,432</td>
+                  <td>72%</td>
+                </tr>
+                <tr>
+                  <td>Health Hub</td>
+                  <td>8</td>
+                  <td>3,210</td>
+                  <td>65%</td>
+                </tr>
+                <tr>
+                  <td>FAQs</td>
+                  <td>24</td>
+                  <td>8,765</td>
+                  <td>81%</td>
+                </tr>
+                <tr>
+                  <td>SMS Reminders</td>
+                  <td>N/A</td>
+                  <td>1,234</td>
+                  <td>92%</td>
+                </tr>
+              </tbody>
+            </table>
           </div>
         </div>
       </div>
@@ -495,6 +687,15 @@ const UserManagementPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [roleFilter, setRoleFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [isAddingUser, setIsAddingUser] = useState(false);
+  const [isEditingUser, setIsEditingUser] = useState(null);
+  const [userForm, setUserForm] = useState({
+    fullName: '',
+    email: '',
+    phone: '',
+    role: 'patient',
+    status: 'active'
+  });
   
   const { data: users, isLoading } = useQuery({
     queryKey: ['users'],
@@ -505,6 +706,29 @@ const UserManagementPage = () => {
     mutationFn: (userId) => apiRequest('DELETE', `/api/users/${userId}`),
     onSuccess: () => {
       queryClient.invalidateQueries(['users']);
+    },
+  });
+
+  const addUserMutation = useMutation({
+    mutationFn: (userData) => apiRequest('POST', '/api/users', userData),
+    onSuccess: () => {
+      queryClient.invalidateQueries(['users']);
+      setIsAddingUser(false);
+      setUserForm({
+        fullName: '',
+        email: '',
+        phone: '',
+        role: 'patient',
+        status: 'active'
+      });
+    },
+  });
+
+  const updateUserMutation = useMutation({
+    mutationFn: ({ id, userData }) => apiRequest('PUT', `/api/users/${id}`, userData),
+    onSuccess: () => {
+      queryClient.invalidateQueries(['users']);
+      setIsEditingUser(null);
     },
   });
 
@@ -524,6 +748,46 @@ const UserManagementPage = () => {
     if (window.confirm('Are you sure you want to delete this user?')) {
       deleteUserMutation.mutate(userId);
     }
+  };
+
+  const handleFormChange = (e) => {
+    const { name, value } = e.target;
+    setUserForm(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleAddUserSubmit = (e) => {
+    e.preventDefault();
+    addUserMutation.mutate(userForm);
+  };
+
+  const handleEditUserSubmit = (e) => {
+    e.preventDefault();
+    updateUserMutation.mutate({ id: isEditingUser.id, userData: userForm });
+  };
+
+  const startEditingUser = (user) => {
+    setIsEditingUser(user);
+    setUserForm({
+      fullName: user.fullName,
+      email: user.email,
+      phone: user.phone,
+      role: user.role,
+      status: user.status
+    });
+  };
+
+  const cancelEditing = () => {
+    setIsEditingUser(null);
+    setUserForm({
+      fullName: '',
+      email: '',
+      phone: '',
+      role: 'patient',
+      status: 'active'
+    });
   };
 
   const filteredUsers = users?.filter(user => {
@@ -583,11 +847,95 @@ const UserManagementPage = () => {
           </select>
         </div>
 
-        <button className="ali-btn ali-btn-primary">
+        <button 
+          className="ali-btn ali-btn-primary"
+          onClick={() => setIsAddingUser(true)}
+        >
           <i className="fas fa-user-plus"></i>
           Add New User
         </button>
       </div>
+
+      {(isAddingUser || isEditingUser) && (
+        <div className="ali-add-user-form">
+          <h3>{isEditingUser ? 'Edit User' : 'Add New User'}</h3>
+          <form onSubmit={isEditingUser ? handleEditUserSubmit : handleAddUserSubmit}>
+            <div className="ali-form-row">
+              <div className="ali-form-group">
+                <label>Full Name</label>
+                <input
+                  type="text"
+                  name="fullName"
+                  value={userForm.fullName}
+                  onChange={handleFormChange}
+                  required
+                />
+              </div>
+              <div className="ali-form-group">
+                <label>Email</label>
+                <input
+                  type="email"
+                  name="email"
+                  value={userForm.email}
+                  onChange={handleFormChange}
+                  required
+                />
+              </div>
+            </div>
+            <div className="ali-form-row">
+              <div className="ali-form-group">
+                <label>Phone</label>
+                <input
+                  type="tel"
+                  name="phone"
+                  value={userForm.phone}
+                  onChange={handleFormChange}
+                />
+              </div>
+              <div className="ali-form-group">
+                <label>Role</label>
+                <select
+                  name="role"
+                  value={userForm.role}
+                  onChange={handleFormChange}
+                >
+                  <option value="patient">Patient</option>
+                  <option value="doctor">Doctor</option>
+                  <option value="nurse">Nurse</option>
+                  <option value="admin">Admin</option>
+                </select>
+              </div>
+              <div className="ali-form-group">
+                <label>Status</label>
+                <select
+                  name="status"
+                  value={userForm.status}
+                  onChange={handleFormChange}
+                >
+                  <option value="active">Active</option>
+                  <option value="inactive">Inactive</option>
+                </select>
+              </div>
+            </div>
+            <div className="ali-form-actions">
+              <button 
+                type="submit" 
+                className="ali-btn ali-btn-primary"
+                disabled={addUserMutation.isLoading || updateUserMutation.isLoading}
+              >
+                {addUserMutation.isLoading || updateUserMutation.isLoading ? 'Saving...' : 'Save User'}
+              </button>
+              <button 
+                type="button" 
+                className="ali-btn ali-btn-secondary"
+                onClick={isEditingUser ? cancelEditing : () => setIsAddingUser(false)}
+              >
+                Cancel
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
 
       <div className="ali-user-table-container">
         <table className="ali-user-table">
@@ -631,7 +979,11 @@ const UserManagementPage = () => {
                 </td>
                 <td>
                   <div className="ali-action-buttons">
-                    <button className="ali-btn ali-btn-icon" title="Edit">
+                    <button 
+                      className="ali-btn ali-btn-icon" 
+                      title="Edit"
+                      onClick={() => startEditingUser(user)}
+                    >
                       <i className="fas fa-edit"></i>
                     </button>
                     <button 
@@ -666,6 +1018,16 @@ const AppointmentsPage = () => {
   const [dateFilter, setDateFilter] = useState('today');
   const [statusFilter, setStatusFilter] = useState('all');
   const [doctorFilter, setDoctorFilter] = useState('all');
+  const [isAddingAppointment, setIsAddingAppointment] = useState(false);
+  const [isEditingAppointment, setIsEditingAppointment] = useState(null);
+  const [appointmentForm, setAppointmentForm] = useState({
+    patientId: '',
+    doctorId: '',
+    date: '',
+    time: '',
+    type: 'Prenatal Checkup',
+    notes: ''
+  });
   
   const { data: appointments, isLoading } = useQuery({
     queryKey: ['appointments'],
@@ -676,6 +1038,30 @@ const AppointmentsPage = () => {
     mutationFn: (appointmentId) => apiRequest('DELETE', `/api/appointments/${appointmentId}`),
     onSuccess: () => {
       queryClient.invalidateQueries(['appointments']);
+    },
+  });
+
+  const addAppointmentMutation = useMutation({
+    mutationFn: (appointmentData) => apiRequest('POST', '/api/appointments', appointmentData),
+    onSuccess: () => {
+      queryClient.invalidateQueries(['appointments']);
+      setIsAddingAppointment(false);
+      setAppointmentForm({
+        patientId: '',
+        doctorId: '',
+        date: '',
+        time: '',
+        type: 'Prenatal Checkup',
+        notes: ''
+      });
+    },
+  });
+
+  const updateAppointmentMutation = useMutation({
+    mutationFn: ({ id, appointmentData }) => apiRequest('PUT', `/api/appointments/${id}`, appointmentData),
+    onSuccess: () => {
+      queryClient.invalidateQueries(['appointments']);
+      setIsEditingAppointment(null);
     },
   });
 
@@ -695,6 +1081,48 @@ const AppointmentsPage = () => {
     if (window.confirm('Are you sure you want to delete this appointment?')) {
       deleteAppointmentMutation.mutate(appointmentId);
     }
+  };
+
+  const handleFormChange = (e) => {
+    const { name, value } = e.target;
+    setAppointmentForm(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleAddAppointmentSubmit = (e) => {
+    e.preventDefault();
+    addAppointmentMutation.mutate(appointmentForm);
+  };
+
+  const handleEditAppointmentSubmit = (e) => {
+    e.preventDefault();
+    updateAppointmentMutation.mutate({ id: isEditingAppointment.id, appointmentData: appointmentForm });
+  };
+
+  const startEditingAppointment = (appointment) => {
+    setIsEditingAppointment(appointment);
+    setAppointmentForm({
+      patientId: appointment.patientId,
+      doctorId: appointment.doctorId.toString(),
+      date: appointment.date,
+      time: appointment.appointmentTime,
+      type: appointment.type,
+      notes: appointment.notes
+    });
+  };
+
+  const cancelEditing = () => {
+    setIsEditingAppointment(null);
+    setAppointmentForm({
+      patientId: '',
+      doctorId: '',
+      date: '',
+      time: '',
+      type: 'Prenatal Checkup',
+      notes: ''
+    });
   };
 
   const filteredAppointments = appointments?.filter(appointment => {
@@ -756,11 +1184,108 @@ const AppointmentsPage = () => {
           </select>
         </div>
 
-        <button className="ali-btn ali-btn-primary">
+        <button 
+          className="ali-btn ali-btn-primary"
+          onClick={() => setIsAddingAppointment(true)}
+        >
           <i className="fas fa-calendar-plus"></i>
           New Appointment
         </button>
       </div>
+
+      {(isAddingAppointment || isEditingAppointment) && (
+        <div className="ali-add-appointment-form">
+          <h3>{isEditingAppointment ? 'Edit Appointment' : 'Schedule New Appointment'}</h3>
+          <form onSubmit={isEditingAppointment ? handleEditAppointmentSubmit : handleAddAppointmentSubmit}>
+            <div className="ali-form-row">
+              <div className="ali-form-group">
+                <label>Patient ID</label>
+                <input
+                  type="text"
+                  name="patientId"
+                  value={appointmentForm.patientId}
+                  onChange={handleFormChange}
+                  required
+                />
+              </div>
+              <div className="ali-form-group">
+                <label>Doctor</label>
+                <select
+                  name="doctorId"
+                  value={appointmentForm.doctorId}
+                  onChange={handleFormChange}
+                  required
+                >
+                  <option value="">Select Doctor</option>
+                  <option value="9">Dr. Sarah Johnson</option>
+                  <option value="6">Dr. Michael Chen</option>
+                  <option value="7">Dr. Lisa Wong</option>
+                </select>
+              </div>
+            </div>
+            <div className="ali-form-row">
+              <div className="ali-form-group">
+                <label>Date</label>
+                <input
+                  type="date"
+                  name="date"
+                  value={appointmentForm.date}
+                  onChange={handleFormChange}
+                  required
+                />
+              </div>
+              <div className="ali-form-group">
+                <label>Time</label>
+                <input
+                  type="time"
+                  name="time"
+                  value={appointmentForm.time}
+                  onChange={handleFormChange}
+                  required
+                />
+              </div>
+              <div className="ali-form-group">
+                <label>Type</label>
+                <select
+                  name="type"
+                  value={appointmentForm.type}
+                  onChange={handleFormChange}
+                >
+                  <option value="Prenatal Checkup">Prenatal Checkup</option>
+                  <option value="Ultrasound">Ultrasound</option>
+                  <option value="Emergency Consultation">Emergency Consultation</option>
+                  <option value="Postnatal Checkup">Postnatal Checkup</option>
+                  <option value="Routine Checkup">Routine Checkup</option>
+                </select>
+              </div>
+            </div>
+            <div className="ali-form-group">
+              <label>Notes</label>
+              <textarea
+                name="notes"
+                value={appointmentForm.notes}
+                onChange={handleFormChange}
+              />
+            </div>
+            <div className="ali-form-actions">
+              <button 
+                type="submit" 
+                className="ali-btn ali-btn-primary"
+                disabled={addAppointmentMutation.isLoading || updateAppointmentMutation.isLoading}
+              >
+                {addAppointmentMutation.isLoading || updateAppointmentMutation.isLoading ? 'Saving...' : 'Save Appointment'}
+              </button>
+              <button 
+                type="button" 
+                className="ali-btn ali-btn-secondary"
+                onClick={isEditingAppointment ? cancelEditing : () => setIsAddingAppointment(false)}
+              >
+                Cancel
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
 
       <div className="ali-appointment-table-container">
         <table className="ali-appointment-table">
@@ -803,10 +1328,18 @@ const AppointmentsPage = () => {
                 </td>
                 <td>
                   <div className="ali-action-buttons">
-                    <button className="ali-btn ali-btn-icon" title="View">
+                    <button 
+                      className="ali-btn ali-btn-icon" 
+                      title="View"
+                      onClick={() => console.log('View appointment', appointment.id)}
+                    >
                       <i className="fas fa-eye"></i>
                     </button>
-                    <button className="ali-btn ali-btn-icon" title="Edit">
+                    <button 
+                      className="ali-btn ali-btn-icon" 
+                      title="Edit"
+                      onClick={() => startEditingAppointment(appointment)}
+                    >
                       <i className="fas fa-edit"></i>
                     </button>
                     <button 
@@ -835,86 +1368,122 @@ const AppointmentsPage = () => {
   );
 };
 
-// Clinics Page Component
-const ClinicsPage = () => {
-  const { data: clinics, isLoading } = useQuery({
-    queryKey: ['clinics'],
-    queryFn: fetchClinics,
-  });
-
-  if (isLoading) {
-    return (
-      <div className="ali-page-content">
-        <div className="ali-loading-spinner"></div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="ali-page-content">
-      <div className="ali-page-header">
-        <h2>Clinic Management</h2>
-        <div className="ali-page-subtitle">
-          Manage all clinic locations and information
-        </div>
-      </div>
-
-      <div className="ali-clinic-cards">
-        {clinics?.map(clinic => (
-          <div className="ali-clinic-card" key={clinic.id}>
-            <div className="ali-clinic-header">
-              <h3>{clinic.name}</h3>
-              <div className="ali-clinic-actions">
-                <button className="ali-btn ali-btn-icon">
-                  <i className="fas fa-edit"></i>
-                </button>
-              </div>
-            </div>
-            <div className="ali-clinic-details">
-              <div className="ali-clinic-address">
-                <i className="fas fa-map-marker-alt"></i>
-                <span>{clinic.address}</span>
-              </div>
-              <div className="ali-clinic-contact">
-                <div className="ali-contact-item">
-                  <i className="fas fa-phone"></i>
-                  <span>{clinic.phone}</span>
-                </div>
-                <div className="ali-contact-item">
-                  <i className="fas fa-envelope"></i>
-                  <span>{clinic.email}</span>
-                </div>
-              </div>
-              <div className="ali-clinic-hours">
-                <i className="fas fa-clock"></i>
-                <span>{clinic.hours}</span>
-              </div>
-            </div>
-            <div className="ali-clinic-doctors">
-              <h4>Doctors:</h4>
-              <div className="ali-doctors-list">
-                {clinic.doctors.map((doctor, index) => (
-                  <span key={index} className="ali-doctor-tag">{doctor}</span>
-                ))}
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      <button className="ali-btn ali-btn-primary ali-add-clinic">
-        <i className="fas fa-plus"></i>
-        Add New Clinic
-      </button>
-    </div>
-  );
-};
-
 // Blog Page Component
 const BlogPage = () => {
+  const queryClient = useQueryClient();
+  const [searchTerm, setSearchTerm] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState('all');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [isAddingPost, setIsAddingPost] = useState(false);
+  const [isEditingPost, setIsEditingPost] = useState(null);
+  const [postForm, setPostForm] = useState({
+    title: '',
+    author: 'Dr. Sarah Johnson',
+    category: 'Nutrition',
+    status: 'draft',
+    content: ''
+  });
+  
   const { data: posts, isLoading } = useQuery({
     queryKey: ['blog'],
     queryFn: fetchBlogPosts,
+  });
+
+  const deletePostMutation = useMutation({
+    mutationFn: (postId) => apiRequest('DELETE', `/api/blog/${postId}`),
+    onSuccess: () => {
+      queryClient.invalidateQueries(['blog']);
+    },
+  });
+
+  const addPostMutation = useMutation({
+    mutationFn: (postData) => apiRequest('POST', '/api/blog', postData),
+    onSuccess: () => {
+      queryClient.invalidateQueries(['blog']);
+      setIsAddingPost(false);
+      setPostForm({
+        title: '',
+        author: 'Dr. Sarah Johnson',
+        category: 'Nutrition',
+        status: 'draft',
+        content: ''
+      });
+    },
+  });
+
+  const updatePostMutation = useMutation({
+    mutationFn: ({ id, postData }) => apiRequest('PUT', `/api/blog/${id}`, postData),
+    onSuccess: () => {
+      queryClient.invalidateQueries(['blog']);
+      setIsEditingPost(null);
+    },
+  });
+
+  const handleSearch = (e) => {
+    setSearchTerm(e.target.value);
+  };
+
+  const handleCategoryFilter = (e) => {
+    setCategoryFilter(e.target.value);
+  };
+
+  const handleStatusFilter = (e) => {
+    setStatusFilter(e.target.value);
+  };
+
+  const handleDeletePost = (postId) => {
+    if (window.confirm('Are you sure you want to delete this post?')) {
+      deletePostMutation.mutate(postId);
+    }
+  };
+
+  const handleFormChange = (e) => {
+    const { name, value } = e.target;
+    setPostForm(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleAddPostSubmit = (e) => {
+    e.preventDefault();
+    addPostMutation.mutate(postForm);
+  };
+
+  const handleEditPostSubmit = (e) => {
+    e.preventDefault();
+    updatePostMutation.mutate({ id: isEditingPost.id, postData: postForm });
+  };
+
+  const startEditingPost = (post) => {
+    setIsEditingPost(post);
+    setPostForm({
+      title: post.title,
+      author: post.author,
+      category: post.category,
+      status: post.status,
+      content: post.content || ''
+    });
+  };
+
+  const cancelEditing = () => {
+    setIsEditingPost(null);
+    setPostForm({
+      title: '',
+      author: 'Dr. Sarah Johnson',
+      category: 'Nutrition',
+      status: 'draft',
+      content: ''
+    });
+  };
+
+  const filteredPosts = posts?.filter(post => {
+    const matchesSearch = post.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                         post.author.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesCategory = categoryFilter === 'all' || post.category === categoryFilter;
+    const matchesStatus = statusFilter === 'all' || post.status === statusFilter;
+    
+    return matchesSearch && matchesCategory && matchesStatus;
   });
 
   if (isLoading) {
@@ -939,35 +1508,123 @@ const BlogPage = () => {
           <input
             type="text"
             placeholder="Search blog posts..."
+            value={searchTerm}
+            onChange={handleSearch}
           />
           <i className="fas fa-search"></i>
         </div>
 
         <div className="ali-filter-group">
           <label>Category:</label>
-          <select>
+          <select value={categoryFilter} onChange={handleCategoryFilter}>
             <option value="all">All Categories</option>
-            <option value="nutrition">Nutrition</option>
-            <option value="fitness">Fitness</option>
-            <option value="health">Health</option>
-            <option value="labor">Labor & Delivery</option>
+            <option value="Nutrition">Nutrition</option>
+            <option value="Fitness">Fitness</option>
+            <option value="Health">Health</option>
+            <option value="Labor & Delivery">Labor & Delivery</option>
           </select>
         </div>
 
         <div className="ali-filter-group">
           <label>Status:</label>
-          <select>
+          <select value={statusFilter} onChange={handleStatusFilter}>
             <option value="all">All Statuses</option>
             <option value="published">Published</option>
             <option value="draft">Draft</option>
           </select>
         </div>
 
-        <button className="ali-btn ali-btn-primary">
+        <button 
+          className="ali-btn ali-btn-primary"
+          onClick={() => setIsAddingPost(true)}
+        >
           <i className="fas fa-plus"></i>
           New Post
         </button>
       </div>
+
+      {(isAddingPost || isEditingPost) && (
+        <div className="ali-add-post-form">
+          <h3>{isEditingPost ? 'Edit Blog Post' : 'Create New Blog Post'}</h3>
+          <form onSubmit={isEditingPost ? handleEditPostSubmit : handleAddPostSubmit}>
+            <div className="ali-form-group">
+              <label>Title</label>
+              <input
+                type="text"
+                name="title"
+                value={postForm.title}
+                onChange={handleFormChange}
+                required
+              />
+            </div>
+            <div className="ali-form-row">
+              <div className="ali-form-group">
+                <label>Author</label>
+                <select
+                  name="author"
+                  value={postForm.author}
+                  onChange={handleFormChange}
+                >
+                  <option value="Dr. Sarah Johnson">Dr. Sarah Johnson</option>
+                  <option value="Dr. Michael Chen">Dr. Michael Chen</option>
+                  <option value="Dr. Lisa Wong">Dr. Lisa Wong</option>
+                  <option value="Nurse Amanda Smith">Nurse Amanda Smith</option>
+                </select>
+              </div>
+              <div className="ali-form-group">
+                <label>Category</label>
+                <select
+                  name="category"
+                  value={postForm.category}
+                  onChange={handleFormChange}
+                >
+                  <option value="Nutrition">Nutrition</option>
+                  <option value="Fitness">Fitness</option>
+                  <option value="Health">Health</option>
+                  <option value="Labor & Delivery">Labor & Delivery</option>
+                </select>
+              </div>
+              <div className="ali-form-group">
+                <label>Status</label>
+                <select
+                  name="status"
+                  value={postForm.status}
+                  onChange={handleFormChange}
+                >
+                  <option value="draft">Draft</option>
+                  <option value="published">Published</option>
+                </select>
+              </div>
+            </div>
+            <div className="ali-form-group">
+              <label>Content</label>
+              <textarea
+                name="content"
+                value={postForm.content}
+                onChange={handleFormChange}
+                rows="10"
+                required
+              />
+            </div>
+            <div className="ali-form-actions">
+              <button 
+                type="submit" 
+                className="ali-btn ali-btn-primary"
+                disabled={addPostMutation.isLoading || updatePostMutation.isLoading}
+              >
+                {addPostMutation.isLoading || updatePostMutation.isLoading ? 'Saving...' : 'Save Post'}
+              </button>
+              <button 
+                type="button" 
+                className="ali-btn ali-btn-secondary"
+                onClick={isEditingPost ? cancelEditing : () => setIsAddingPost(false)}
+              >
+                Cancel
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
 
       <div className="ali-blog-table-container">
         <table className="ali-blog-table">
@@ -983,7 +1640,7 @@ const BlogPage = () => {
             </tr>
           </thead>
           <tbody>
-            {posts?.map(post => (
+            {filteredPosts?.map(post => (
               <tr key={post.id}>
                 <td>{post.title}</td>
                 <td>{post.author}</td>
@@ -1001,13 +1658,25 @@ const BlogPage = () => {
                 <td>{post.views}</td>
                 <td>
                   <div className="ali-action-buttons">
-                    <button className="ali-btn ali-btn-icon" title="Edit">
+                    <button 
+                      className="ali-btn ali-btn-icon" 
+                      title="Edit"
+                      onClick={() => startEditingPost(post)}
+                    >
                       <i className="fas fa-edit"></i>
                     </button>
-                    <button className="ali-btn ali-btn-icon" title="View">
+                    <button 
+                      className="ali-btn ali-btn-icon" 
+                      title="View"
+                      onClick={() => console.log('View post', post.id)}
+                    >
                       <i className="fas fa-eye"></i>
                     </button>
-                    <button className="ali-btn ali-btn-icon ali-danger" title="Delete">
+                    <button 
+                      className="ali-btn ali-btn-icon ali-danger" 
+                      title="Delete"
+                      onClick={() => handleDeletePost(post.id)}
+                    >
                       <i className="fas fa-trash"></i>
                     </button>
                   </div>
@@ -1023,9 +1692,116 @@ const BlogPage = () => {
 
 // FAQs Page Component
 const FAQsPage = () => {
+  const queryClient = useQueryClient();
+  const [searchTerm, setSearchTerm] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState('all');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [isAddingFAQ, setIsAddingFAQ] = useState(false);
+  const [isEditingFAQ, setIsEditingFAQ] = useState(null);
+  const [faqForm, setFaqForm] = useState({
+    question: '',
+    answer: '',
+    category: 'Prenatal Care',
+    status: 'draft'
+  });
+  
   const { data: faqs, isLoading } = useQuery({
     queryKey: ['faqs'],
     queryFn: fetchFAQs,
+  });
+
+  const deleteFAQMutation = useMutation({
+    mutationFn: (faqId) => apiRequest('DELETE', `/api/faqs/${faqId}`),
+    onSuccess: () => {
+      queryClient.invalidateQueries(['faqs']);
+    },
+  });
+
+  const addFAQMutation = useMutation({
+    mutationFn: (faqData) => apiRequest('POST', '/api/faqs', faqData),
+    onSuccess: () => {
+      queryClient.invalidateQueries(['faqs']);
+      setIsAddingFAQ(false);
+      setFaqForm({
+        question: '',
+        answer: '',
+        category: 'Prenatal Care',
+        status: 'draft'
+      });
+    },
+  });
+
+  const updateFAQMutation = useMutation({
+    mutationFn: ({ id, faqData }) => apiRequest('PUT', `/api/faqs/${id}`, faqData),
+    onSuccess: () => {
+      queryClient.invalidateQueries(['faqs']);
+      setIsEditingFAQ(null);
+    },
+  });
+
+  const handleSearch = (e) => {
+    setSearchTerm(e.target.value);
+  };
+
+  const handleCategoryFilter = (e) => {
+    setCategoryFilter(e.target.value);
+  };
+
+  const handleStatusFilter = (e) => {
+    setStatusFilter(e.target.value);
+  };
+
+  const handleDeleteFAQ = (faqId) => {
+    if (window.confirm('Are you sure you want to delete this FAQ?')) {
+      deleteFAQMutation.mutate(faqId);
+    }
+  };
+
+  const handleFormChange = (e) => {
+    const { name, value } = e.target;
+    setFaqForm(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleAddFAQSubmit = (e) => {
+    e.preventDefault();
+    addFAQMutation.mutate(faqForm);
+  };
+
+  const handleEditFAQSubmit = (e) => {
+    e.preventDefault();
+    updateFAQMutation.mutate({ id: isEditingFAQ.id, faqData: faqForm });
+  };
+
+  const startEditingFAQ = (faq) => {
+    setIsEditingFAQ(faq);
+    setFaqForm({
+      question: faq.question,
+      answer: faq.answer,
+      category: faq.category,
+      status: faq.status
+    });
+  };
+
+  const cancelEditing = () => {
+    setIsEditingFAQ(null);
+    setFaqForm({
+      question: '',
+      answer: '',
+      category: 'Prenatal Care',
+      status: 'draft'
+    });
+  };
+
+  const filteredFAQs = faqs?.filter(faq => {
+    const matchesSearch = faq.question.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                         faq.answer.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesCategory = categoryFilter === 'all' || faq.category === categoryFilter;
+    const matchesStatus = statusFilter === 'all' || faq.status === statusFilter;
+    
+    return matchesSearch && matchesCategory && matchesStatus;
   });
 
   if (isLoading) {
@@ -1050,38 +1826,113 @@ const FAQsPage = () => {
           <input
             type="text"
             placeholder="Search FAQs..."
+            value={searchTerm}
+            onChange={handleSearch}
           />
           <i className="fas fa-search"></i>
         </div>
 
         <div className="ali-filter-group">
           <label>Category:</label>
-          <select>
+          <select value={categoryFilter} onChange={handleCategoryFilter}>
             <option value="all">All Categories</option>
-            <option value="prenatal">Prenatal Care</option>
-            <option value="pregnancy">Pregnancy Health</option>
-            <option value="nutrition">Nutrition</option>
-            <option value="lifestyle">Lifestyle</option>
+            <option value="Prenatal Care">Prenatal Care</option>
+            <option value="Pregnancy Health">Pregnancy Health</option>
+            <option value="Nutrition">Nutrition</option>
+            <option value="Lifestyle">Lifestyle</option>
           </select>
         </div>
 
         <div className="ali-filter-group">
           <label>Status:</label>
-          <select>
+          <select value={statusFilter} onChange={handleStatusFilter}>
             <option value="all">All Statuses</option>
             <option value="published">Published</option>
             <option value="draft">Draft</option>
           </select>
         </div>
 
-        <button className="ali-btn ali-btn-primary">
+        <button 
+          className="ali-btn ali-btn-primary"
+          onClick={() => setIsAddingFAQ(true)}
+        >
           <i className="fas fa-plus"></i>
           New FAQ
         </button>
       </div>
 
+      {(isAddingFAQ || isEditingFAQ) && (
+        <div className="ali-add-faq-form">
+          <h3>{isEditingFAQ ? 'Edit FAQ' : 'Add New FAQ'}</h3>
+          <form onSubmit={isEditingFAQ ? handleEditFAQSubmit : handleAddFAQSubmit}>
+            <div className="ali-form-group">
+              <label>Question</label>
+              <input
+                type="text"
+                name="question"
+                value={faqForm.question}
+                onChange={handleFormChange}
+                required
+              />
+            </div>
+            <div className="ali-form-group">
+              <label>Answer</label>
+              <textarea
+                name="answer"
+                value={faqForm.answer}
+                onChange={handleFormChange}
+                rows="5"
+                required
+              />
+            </div>
+            <div className="ali-form-row">
+              <div className="ali-form-group">
+                <label>Category</label>
+                <select
+                  name="category"
+                  value={faqForm.category}
+                  onChange={handleFormChange}
+                >
+                  <option value="Prenatal Care">Prenatal Care</option>
+                  <option value="Pregnancy Health">Pregnancy Health</option>
+                  <option value="Nutrition">Nutrition</option>
+                  <option value="Lifestyle">Lifestyle</option>
+                </select>
+              </div>
+              <div className="ali-form-group">
+                <label>Status</label>
+                <select
+                  name="status"
+                  value={faqForm.status}
+                  onChange={handleFormChange}
+                >
+                  <option value="draft">Draft</option>
+                  <option value="published">Published</option>
+                </select>
+              </div>
+            </div>
+            <div className="ali-form-actions">
+              <button 
+                type="submit" 
+                className="ali-btn ali-btn-primary"
+                disabled={addFAQMutation.isLoading || updateFAQMutation.isLoading}
+              >
+                {addFAQMutation.isLoading || updateFAQMutation.isLoading ? 'Saving...' : 'Save FAQ'}
+              </button>
+              <button 
+                type="button" 
+                className="ali-btn ali-btn-secondary"
+                onClick={isEditingFAQ ? cancelEditing : () => setIsAddingFAQ(false)}
+              >
+                Cancel
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+
       <div className="ali-faq-list">
-        {faqs?.map(faq => (
+        {filteredFAQs?.map(faq => (
           <div className="ali-faq-item" key={faq.id}>
             <div className="ali-faq-question">
               <h4>{faq.question}</h4>
@@ -1098,10 +1949,16 @@ const FAQsPage = () => {
               <p>{faq.answer}</p>
             </div>
             <div className="ali-faq-actions">
-              <button className="ali-btn ali-btn-icon">
+              <button 
+                className="ali-btn ali-btn-icon"
+                onClick={() => startEditingFAQ(faq)}
+              >
                 <i className="fas fa-edit"></i>
               </button>
-              <button className="ali-btn ali-btn-icon ali-danger">
+              <button 
+                className="ali-btn ali-btn-icon ali-danger"
+                onClick={() => handleDeleteFAQ(faq.id)}
+              >
                 <i className="fas fa-trash"></i>
               </button>
             </div>
@@ -1114,9 +1971,115 @@ const FAQsPage = () => {
 
 // Health Hub Page Component
 const HealthHubPage = () => {
+  const queryClient = useQueryClient();
+  const [searchTerm, setSearchTerm] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState('all');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [isAddingResource, setIsAddingResource] = useState(false);
+  const [isEditingResource, setIsEditingResource] = useState(null);
+  const [resourceForm, setResourceForm] = useState({
+    title: '',
+    category: 'Pregnancy',
+    status: 'draft',
+    content: ''
+  });
+  
   const { data: resources, isLoading } = useQuery({
     queryKey: ['healthhub'],
     queryFn: fetchHealthHub,
+  });
+
+  const deleteResourceMutation = useMutation({
+    mutationFn: (resourceId) => apiRequest('DELETE', `/api/healthhub/${resourceId}`),
+    onSuccess: () => {
+      queryClient.invalidateQueries(['healthhub']);
+    },
+  });
+
+  const addResourceMutation = useMutation({
+    mutationFn: (resourceData) => apiRequest('POST', '/api/healthhub', resourceData),
+    onSuccess: () => {
+      queryClient.invalidateQueries(['healthhub']);
+      setIsAddingResource(false);
+      setResourceForm({
+        title: '',
+        category: 'Pregnancy',
+        status: 'draft',
+        content: ''
+      });
+    },
+  });
+
+  const updateResourceMutation = useMutation({
+    mutationFn: ({ id, resourceData }) => apiRequest('PUT', `/api/healthhub/${id}`, resourceData),
+    onSuccess: () => {
+      queryClient.invalidateQueries(['healthhub']);
+      setIsEditingResource(null);
+    },
+  });
+
+  const handleSearch = (e) => {
+    setSearchTerm(e.target.value);
+  };
+
+  const handleCategoryFilter = (e) => {
+    setCategoryFilter(e.target.value);
+  };
+
+  const handleStatusFilter = (e) => {
+    setStatusFilter(e.target.value);
+  };
+
+  const handleDeleteResource = (resourceId) => {
+    if (window.confirm('Are you sure you want to delete this resource?')) {
+      deleteResourceMutation.mutate(resourceId);
+    }
+  };
+
+  const handleFormChange = (e) => {
+    const { name, value } = e.target;
+    setResourceForm(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleAddResourceSubmit = (e) => {
+    e.preventDefault();
+    addResourceMutation.mutate(resourceForm);
+  };
+
+  const handleEditResourceSubmit = (e) => {
+    e.preventDefault();
+    updateResourceMutation.mutate({ id: isEditingResource.id, resourceData: resourceForm });
+  };
+
+  const startEditingResource = (resource) => {
+    setIsEditingResource(resource);
+    setResourceForm({
+      title: resource.title,
+      category: resource.category,
+      status: resource.status,
+      content: resource.content || ''
+    });
+  };
+
+  const cancelEditing = () => {
+    setIsEditingResource(null);
+    setResourceForm({
+      title: '',
+      category: 'Pregnancy',
+      status: 'draft',
+      content: ''
+    });
+  };
+
+  const filteredResources = resources?.filter(resource => {
+    const matchesSearch = resource.title.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesCategory = categoryFilter === 'all' || resource.category === categoryFilter;
+    const matchesStatus = statusFilter === 'all' || resource.status === statusFilter;
+    
+    return matchesSearch && matchesCategory && matchesStatus;
   });
 
   if (isLoading) {
@@ -1141,37 +2104,111 @@ const HealthHubPage = () => {
           <input
             type="text"
             placeholder="Search resources..."
+            value={searchTerm}
+            onChange={handleSearch}
           />
           <i className="fas fa-search"></i>
         </div>
 
         <div className="ali-filter-group">
           <label>Category:</label>
-          <select>
+          <select value={categoryFilter} onChange={handleCategoryFilter}>
             <option value="all">All Categories</option>
-            <option value="pregnancy">Pregnancy</option>
-            <option value="postpartum">Postpartum</option>
-            <option value="newborn">Newborn Care</option>
+            <option value="Pregnancy">Pregnancy</option>
+            <option value="Postpartum">Postpartum</option>
+            <option value="Newborn Care">Newborn Care</option>
           </select>
         </div>
 
         <div className="ali-filter-group">
           <label>Status:</label>
-          <select>
+          <select value={statusFilter} onChange={handleStatusFilter}>
             <option value="all">All Statuses</option>
             <option value="published">Published</option>
             <option value="draft">Draft</option>
           </select>
         </div>
 
-        <button className="ali-btn ali-btn-primary">
+        <button 
+          className="ali-btn ali-btn-primary"
+          onClick={() => setIsAddingResource(true)}
+        >
           <i className="fas fa-plus"></i>
           New Resource
         </button>
       </div>
 
+      {(isAddingResource || isEditingResource) && (
+        <div className="ali-add-resource-form">
+          <h3>{isEditingResource ? 'Edit Resource' : 'Add New Resource'}</h3>
+          <form onSubmit={isEditingResource ? handleEditResourceSubmit : handleAddResourceSubmit}>
+            <div className="ali-form-group">
+              <label>Title</label>
+              <input
+                type="text"
+                name="title"
+                value={resourceForm.title}
+                onChange={handleFormChange}
+                required
+              />
+            </div>
+            <div className="ali-form-row">
+              <div className="ali-form-group">
+                <label>Category</label>
+                <select
+                  name="category"
+                  value={resourceForm.category}
+                  onChange={handleFormChange}
+                >
+                  <option value="Pregnancy">Pregnancy</option>
+                  <option value="Postpartum">Postpartum</option>
+                  <option value="Newborn Care">Newborn Care</option>
+                </select>
+              </div>
+              <div className="ali-form-group">
+                <label>Status</label>
+                <select
+                  name="status"
+                  value={resourceForm.status}
+                  onChange={handleFormChange}
+                >
+                  <option value="draft">Draft</option>
+                  <option value="published">Published</option>
+                </select>
+              </div>
+            </div>
+            <div className="ali-form-group">
+              <label>Content</label>
+              <textarea
+                name="content"
+                value={resourceForm.content}
+                onChange={handleFormChange}
+                rows="10"
+                required
+              />
+            </div>
+            <div className="ali-form-actions">
+              <button 
+                type="submit" 
+                className="ali-btn ali-btn-primary"
+                disabled={addResourceMutation.isLoading || updateResourceMutation.isLoading}
+              >
+                {addResourceMutation.isLoading || updateResourceMutation.isLoading ? 'Saving...' : 'Save Resource'}
+              </button>
+              <button 
+                type="button" 
+                className="ali-btn ali-btn-secondary"
+                onClick={isEditingResource ? cancelEditing : () => setIsAddingResource(false)}
+              >
+                Cancel
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+
       <div className="ali-resource-grid">
-        {resources?.map(resource => (
+        {filteredResources?.map(resource => (
           <div className="ali-resource-card" key={resource.id}>
             <div className="ali-resource-header">
               <h3>{resource.title}</h3>
@@ -1187,14 +2224,26 @@ const HealthHubPage = () => {
                 Updated: {resource.lastUpdated}
               </span>
             </div>
+            <div className="ali-resource-preview">
+              {resource.content.substring(0, 150)}...
+            </div>
             <div className="ali-resource-actions">
-              <button className="ali-btn ali-btn-icon">
+              <button 
+                className="ali-btn ali-btn-icon"
+                onClick={() => startEditingResource(resource)}
+              >
                 <i className="fas fa-edit"></i>
               </button>
-              <button className="ali-btn ali-btn-icon">
+              <button 
+                className="ali-btn ali-btn-icon"
+                onClick={() => console.log('View resource', resource.id)}
+              >
                 <i className="fas fa-eye"></i>
               </button>
-              <button className="ali-btn ali-btn-icon ali-danger">
+              <button 
+                className="ali-btn ali-btn-icon ali-danger"
+                onClick={() => handleDeleteResource(resource.id)}
+              >
                 <i className="fas fa-trash"></i>
               </button>
             </div>
@@ -1207,9 +2256,89 @@ const HealthHubPage = () => {
 
 // SMS Reminders Page Component
 const SMSRemindersPage = () => {
+  const queryClient = useQueryClient();
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [isSendingReminder, setIsSendingReminder] = useState(false);
+  const [newReminder, setNewReminder] = useState({
+    patientId: '',
+    message: '',
+    sendDate: '',
+    sendTime: ''
+  });
+  
   const { data: reminders, isLoading } = useQuery({
     queryKey: ['sms-reminders'],
     queryFn: fetchSMSReminders,
+  });
+
+  const deleteReminderMutation = useMutation({
+    mutationFn: (reminderId) => apiRequest('DELETE', `/api/sms-reminders/${reminderId}`),
+    onSuccess: () => {
+      queryClient.invalidateQueries(['sms-reminders']);
+    },
+  });
+
+  const sendReminderMutation = useMutation({
+    mutationFn: (reminderData) => apiRequest('POST', '/api/sms-reminders', reminderData),
+    onSuccess: () => {
+      queryClient.invalidateQueries(['sms-reminders']);
+      setIsSendingReminder(false);
+      setNewReminder({
+        patientId: '',
+        message: '',
+        sendDate: '',
+        sendTime: ''
+      });
+    },
+  });
+
+  const resendReminderMutation = useMutation({
+    mutationFn: (reminderId) => apiRequest('POST', `/api/sms-reminders/${reminderId}/resend`),
+    onSuccess: () => {
+      queryClient.invalidateQueries(['sms-reminders']);
+    },
+  });
+
+  const handleSearch = (e) => {
+    setSearchTerm(e.target.value);
+  };
+
+  const handleStatusFilter = (e) => {
+    setStatusFilter(e.target.value);
+  };
+
+  const handleDeleteReminder = (reminderId) => {
+    if (window.confirm('Are you sure you want to delete this reminder?')) {
+      deleteReminderMutation.mutate(reminderId);
+    }
+  };
+
+  const handleResendReminder = (reminderId) => {
+    if (window.confirm('Resend this SMS reminder?')) {
+      resendReminderMutation.mutate(reminderId);
+    }
+  };
+
+  const handleNewReminderChange = (e) => {
+    const { name, value } = e.target;
+    setNewReminder(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleSendReminderSubmit = (e) => {
+    e.preventDefault();
+    sendReminderMutation.mutate(newReminder);
+  };
+
+  const filteredReminders = reminders?.filter(reminder => {
+    const matchesSearch = reminder.patientName.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                         reminder.message.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesStatus = statusFilter === 'all' || reminder.status === statusFilter;
+    
+    return matchesSearch && matchesStatus;
   });
 
   if (isLoading) {
@@ -1234,13 +2363,15 @@ const SMSRemindersPage = () => {
           <input
             type="text"
             placeholder="Search reminders..."
+            value={searchTerm}
+            onChange={handleSearch}
           />
           <i className="fas fa-search"></i>
         </div>
 
         <div className="ali-filter-group">
           <label>Status:</label>
-          <select>
+          <select value={statusFilter} onChange={handleStatusFilter}>
             <option value="all">All Statuses</option>
             <option value="delivered">Delivered</option>
             <option value="scheduled">Scheduled</option>
@@ -1248,11 +2379,80 @@ const SMSRemindersPage = () => {
           </select>
         </div>
 
-        <button className="ali-btn ali-btn-primary">
+        <button 
+          className="ali-btn ali-btn-primary"
+          onClick={() => setIsSendingReminder(true)}
+        >
           <i className="fas fa-plus"></i>
           New Reminder
         </button>
       </div>
+
+      {isSendingReminder && (
+        <div className="ali-send-reminder-form">
+          <h3>Send New SMS Reminder</h3>
+          <form onSubmit={handleSendReminderSubmit}>
+            <div className="ali-form-group">
+              <label>Patient ID</label>
+              <input
+                type="text"
+                name="patientId"
+                value={newReminder.patientId}
+                onChange={handleNewReminderChange}
+                required
+              />
+            </div>
+            <div className="ali-form-group">
+              <label>Message</label>
+              <textarea
+                name="message"
+                value={newReminder.message}
+                onChange={handleNewReminderChange}
+                rows="3"
+                required
+              />
+            </div>
+            <div className="ali-form-row">
+              <div className="ali-form-group">
+                <label>Send Date</label>
+                <input
+                  type="date"
+                  name="sendDate"
+                  value={newReminder.sendDate}
+                  onChange={handleNewReminderChange}
+                  required
+                />
+              </div>
+              <div className="ali-form-group">
+                <label>Send Time</label>
+                <input
+                  type="time"
+                  name="sendTime"
+                  value={newReminder.sendTime}
+                  onChange={handleNewReminderChange}
+                  required
+                />
+              </div>
+            </div>
+            <div className="ali-form-actions">
+              <button 
+                type="submit" 
+                className="ali-btn ali-btn-primary"
+                disabled={sendReminderMutation.isLoading}
+              >
+                {sendReminderMutation.isLoading ? 'Sending...' : 'Send Reminder'}
+              </button>
+              <button 
+                type="button" 
+                className="ali-btn ali-btn-secondary"
+                onClick={() => setIsSendingReminder(false)}
+              >
+                Cancel
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
 
       <div className="ali-reminder-table-container">
         <table className="ali-reminder-table">
@@ -1267,7 +2467,7 @@ const SMSRemindersPage = () => {
             </tr>
           </thead>
           <tbody>
-            {reminders?.map(reminder => (
+            {filteredReminders?.map(reminder => (
               <tr key={reminder.id}>
                 <td>{reminder.patientName}</td>
                 <td>{reminder.phone}</td>
@@ -1284,10 +2484,19 @@ const SMSRemindersPage = () => {
                 </td>
                 <td>
                   <div className="ali-action-buttons">
-                    <button className="ali-btn ali-btn-icon" title="Resend">
+                    <button 
+                      className="ali-btn ali-btn-icon" 
+                      title="Resend"
+                      onClick={() => handleResendReminder(reminder.id)}
+                      disabled={reminder.status !== 'failed' || resendReminderMutation.isLoading}
+                    >
                       <i className="fas fa-redo"></i>
                     </button>
-                    <button className="ali-btn ali-btn-icon ali-danger" title="Delete">
+                    <button 
+                      className="ali-btn ali-btn-icon ali-danger" 
+                      title="Delete"
+                      onClick={() => handleDeleteReminder(reminder.id)}
+                    >
                       <i className="fas fa-trash"></i>
                     </button>
                   </div>
@@ -1303,9 +2512,46 @@ const SMSRemindersPage = () => {
 
 // Emergency Logs Page Component
 const EmergencyLogsPage = () => {
+  const queryClient = useQueryClient();
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [typeFilter, setTypeFilter] = useState('all');
+  
   const { data: logs, isLoading } = useQuery({
     queryKey: ['emergency-logs'],
     queryFn: fetchEmergencyLogs,
+  });
+
+  const updateEmergencyStatusMutation = useMutation({
+    mutationFn: ({ id, status }) => apiRequest('PUT', `/api/emergency-logs/${id}`, { status }),
+    onSuccess: () => {
+      queryClient.invalidateQueries(['emergency-logs']);
+    },
+  });
+
+  const handleSearch = (e) => {
+    setSearchTerm(e.target.value);
+  };
+
+  const handleStatusFilter = (e) => {
+    setStatusFilter(e.target.value);
+  };
+
+  const handleTypeFilter = (e) => {
+    setTypeFilter(e.target.value);
+  };
+
+  const handleStatusChange = (logId, newStatus) => {
+    updateEmergencyStatusMutation.mutate({ id: logId, status: newStatus });
+  };
+
+  const filteredLogs = logs?.filter(log => {
+    const matchesSearch = log.patientName.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                         log.notes.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesStatus = statusFilter === 'all' || log.status === statusFilter;
+    const matchesType = typeFilter === 'all' || log.type === typeFilter;
+    
+    return matchesSearch && matchesStatus && matchesType;
   });
 
   if (isLoading) {
@@ -1330,13 +2576,15 @@ const EmergencyLogsPage = () => {
           <input
             type="text"
             placeholder="Search emergency logs..."
+            value={searchTerm}
+            onChange={handleSearch}
           />
           <i className="fas fa-search"></i>
         </div>
 
         <div className="ali-filter-group">
           <label>Status:</label>
-          <select>
+          <select value={statusFilter} onChange={handleStatusFilter}>
             <option value="all">All Statuses</option>
             <option value="resolved">Resolved</option>
             <option value="pending">Pending</option>
@@ -1346,17 +2594,17 @@ const EmergencyLogsPage = () => {
 
         <div className="ali-filter-group">
           <label>Type:</label>
-          <select>
+          <select value={typeFilter} onChange={handleTypeFilter}>
             <option value="all">All Types</option>
-            <option value="cramping">Severe Cramping</option>
-            <option value="bleeding">Vaginal Bleeding</option>
-            <option value="movement">Decreased Fetal Movement</option>
+            <option value="Severe Cramping">Severe Cramping</option>
+            <option value="Vaginal Bleeding">Vaginal Bleeding</option>
+            <option value="Decreased Fetal Movement">Decreased Fetal Movement</option>
           </select>
         </div>
       </div>
 
       <div className="ali-emergency-logs">
-        {logs?.map(log => (
+        {filteredLogs?.map(log => (
           <div className={`ali-emergency-card ${log.status}`} key={log.id}>
             <div className="ali-emergency-header">
               <h3>{log.patientName}</h3>
@@ -1364,9 +2612,17 @@ const EmergencyLogsPage = () => {
                 <span className="ali-emergency-date">
                   {new Date(log.date).toLocaleString()}
                 </span>
-                <span className={`ali-status-badge ${log.status}`}>
-                  {log.status}
-                </span>
+                <div className="ali-status-select">
+                  <select
+                    value={log.status}
+                    onChange={(e) => handleStatusChange(log.id, e.target.value)}
+                    disabled={updateEmergencyStatusMutation.isLoading}
+                  >
+                    <option value="pending">Pending</option>
+                    <option value="resolved">Resolved</option>
+                    <option value="escalated">Escalated</option>
+                  </select>
+                </div>
               </div>
             </div>
             <div className="ali-emergency-type">
@@ -1396,6 +2652,7 @@ const EmergencyLogsPage = () => {
 
 // Settings Page Component
 const SettingsPage = () => {
+  const queryClient = useQueryClient();
   const { data: settings, isLoading } = useQuery({
     queryKey: ['settings'],
     queryFn: fetchSettings,
@@ -1403,6 +2660,14 @@ const SettingsPage = () => {
 
   const [formData, setFormData] = useState({});
   const [isEditing, setIsEditing] = useState(false);
+
+  const updateSettingsMutation = useMutation({
+    mutationFn: (settingsData) => apiRequest('PUT', '/api/settings', settingsData),
+    onSuccess: () => {
+      queryClient.invalidateQueries(['settings']);
+      setIsEditing(false);
+    },
+  });
 
   useEffect(() => {
     if (settings) {
@@ -1420,8 +2685,7 @@ const SettingsPage = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    // Save settings logic here
-    setIsEditing(false);
+    updateSettingsMutation.mutate(formData);
   };
 
   if (isLoading) {
@@ -1557,9 +2821,13 @@ const SettingsPage = () => {
               </button>
             ) : (
               <>
-                <button type="submit" className="ali-btn ali-btn-primary">
+                <button 
+                  type="submit" 
+                  className="ali-btn ali-btn-primary"
+                  disabled={updateSettingsMutation.isLoading}
+                >
                   <i className="fas fa-save"></i>
-                  Save Changes
+                  {updateSettingsMutation.isLoading ? 'Saving...' : 'Save Changes'}
                 </button>
                 <button 
                   type="button" 
@@ -1568,6 +2836,7 @@ const SettingsPage = () => {
                     setIsEditing(false);
                     setFormData(settings);
                   }}
+                  disabled={updateSettingsMutation.isLoading}
                 >
                   <i className="fas fa-times"></i>
                   Cancel
@@ -1581,98 +2850,6 @@ const SettingsPage = () => {
   );
 };
 
-// Pages Management Component
-const PagesPage = () => {
-  const { data: pages, isLoading } = useQuery({
-    queryKey: ['pages'],
-    queryFn: fetchPages,
-  });
-
-  if (isLoading) {
-    return (
-      <div className="ali-page-content">
-        <div className="ali-loading-spinner"></div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="ali-page-content">
-      <div className="ali-page-header">
-        <h2>Pages Management</h2>
-        <div className="ali-page-subtitle">
-          Manage website pages and content
-        </div>
-      </div>
-
-      <div className="ali-pages-tools">
-        <div className="ali-search-filter">
-          <input
-            type="text"
-            placeholder="Search pages..."
-          />
-          <i className="fas fa-search"></i>
-        </div>
-
-        <div className="ali-filter-group">
-          <label>Status:</label>
-          <select>
-            <option value="all">All Statuses</option>
-            <option value="published">Published</option>
-            <option value="draft">Draft</option>
-          </select>
-        </div>
-
-        <button className="ali-btn ali-btn-primary">
-          <i className="fas fa-plus"></i>
-          New Page
-        </button>
-      </div>
-
-      <div className="ali-pages-table-container">
-        <table className="ali-pages-table">
-          <thead>
-            <tr>
-              <th>Title</th>
-              <th>Slug</th>
-              <th>Status</th>
-              <th>Last Updated</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {pages?.map(page => (
-              <tr key={page.id}>
-                <td>{page.title}</td>
-                <td>/{page.slug}</td>
-                <td>
-                  <span className={`ali-status-badge ${page.status}`}>
-                    {page.status}
-                  </span>
-                </td>
-                <td>{page.lastUpdated}</td>
-                <td>
-                  <div className="ali-action-buttons">
-                    <button className="ali-btn ali-btn-icon" title="Edit">
-                      <i className="fas fa-edit"></i>
-                    </button>
-                    <button className="ali-btn ali-btn-icon" title="View">
-                      <i className="fas fa-eye"></i>
-                    </button>
-                    <button className="ali-btn ali-btn-icon ali-danger" title="Delete">
-                      <i className="fas fa-trash"></i>
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  );
-};
-
 // Dashboard Home Component
 const DashboardHome = () => {
   const { data: stats } = useQuery({
@@ -1681,10 +2858,9 @@ const DashboardHome = () => {
     refetchInterval: 30000,
   });
 
-  const navigate = useNavigate();
-
   const generateReport = () => {
     console.log('Generating comprehensive report...');
+    alert('Report generation started. You will receive a notification when it is ready.');
   };
 
   const quickActions = [
@@ -1692,25 +2868,25 @@ const DashboardHome = () => {
       icon: "fas fa-user-plus",
       title: "Add New Patient",
       description: "Register a new patient",
-      action: () => navigate('/admin/users/new')
+      action: () => console.log('Navigate to add patient')
     },
     {
       icon: "fas fa-calendar-plus",
       title: "Schedule Appointment",
       description: "Book a new appointment",
-      action: () => navigate('/admin/appointments/new')
+      action: () => console.log('Navigate to schedule appointment')
     },
     {
       icon: "fas fa-ambulance",
       title: "Emergency Protocol",
       description: "Handle emergency cases",
-      action: () => navigate('/admin/emergency-logs')
+      action: () => console.log('Navigate to emergency protocol')
     },
     {
       icon: "fas fa-chart-bar",
       title: "View Reports",
       description: "Generate analytics",
-      action: () => navigate('/admin/analytics')
+      action: () => console.log('Navigate to analytics')
     }
   ];
 
@@ -1729,7 +2905,60 @@ const DashboardHome = () => {
         </button>
       </div>
 
-      <StatsCard />
+      <div className="ali-stats-cards">
+        <div className="ali-stat-card">
+          <div className="ali-stat-card-header">
+            <h3>Total Patients</h3>
+            <div className="ali-stat-card-icon ali-primary">
+              <i className="fas fa-users"></i>
+            </div>
+          </div>
+          <div className="ali-value">{stats?.totalPatients.toLocaleString() || 0}</div>
+          <div className="ali-change ali-positive">
+            <i className="fas fa-arrow-up"></i>
+            <span>+12.5%</span> from last month
+          </div>
+        </div>
+        <div className="ali-stat-card">
+          <div className="ali-stat-card-header">
+            <h3>Active Pregnancies</h3>
+            <div className="ali-stat-card-icon ali-success">
+              <i className="fas fa-baby"></i>
+            </div>
+          </div>
+          <div className="ali-value">{stats?.activePregnancies.toLocaleString() || 0}</div>
+          <div className="ali-change ali-positive">
+            <i className="fas fa-arrow-up"></i>
+            <span>+8.3%</span> from last month
+          </div>
+        </div>
+        <div className="ali-stat-card">
+          <div className="ali-stat-card-header">
+            <h3>Today's Appointments</h3>
+            <div className="ali-stat-card-icon ali-warning">
+              <i className="fas fa-calendar-check"></i>
+            </div>
+          </div>
+          <div className="ali-value">{stats?.todayAppointments.toLocaleString() || 0}</div>
+          <div className="ali-change ali-negative">
+            <i className="fas fa-arrow-down"></i>
+            <span>-3.1%</span> from last month
+          </div>
+        </div>
+        <div className="ali-stat-card">
+          <div className="ali-stat-card-header">
+            <h3>Emergency Alerts</h3>
+            <div className="ali-stat-card-icon ali-info">
+              <i className="fas fa-exclamation-triangle"></i>
+            </div>
+          </div>
+          <div className="ali-value">{stats?.emergencyAlerts.toLocaleString() || 0}</div>
+          <div className="ali-change ali-positive">
+            <i className="fas fa-arrow-up"></i>
+            <span>-25%</span> from last month
+          </div>
+        </div>
+      </div>
 
       <div className="ali-quick-actions">
         {quickActions.map((action, index) => (
@@ -1747,8 +2976,107 @@ const DashboardHome = () => {
         ))}
       </div>
 
-      <RecentAppointments />
-      <RecentUser />
+      <div className="ali-card">
+        <div className="ali-card-header">
+          <h3>Today's Appointments</h3>
+          <button className="ali-btn ali-btn-primary">
+            <i className="fas fa-eye"></i>
+            View All
+          </button>
+        </div>
+        <div className="ali-card-body">
+          <table>
+            <thead>
+              <tr>
+                <th>Patient Name</th>
+                <th>Time</th>
+                <th>Type</th>
+                <th>Doctor</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {fetchAppointments()
+                .filter(appt => appt.date === new Date().toISOString().split('T')[0])
+                .sort((a, b) => a.appointmentTime.localeCompare(b.appointmentTime))
+                .slice(0, 5)
+                .map((appointment) => (
+                  <tr key={appointment.id}>
+                    <td>{appointment.patientName}</td>
+                    <td>{appointment.appointmentTime}</td>
+                    <td>{appointment.type}</td>
+                    <td>{appointment.doctorName}</td>
+                    <td>
+                      <span className={`ali-status ${appointment.status}`}>
+                        {appointment.status}
+                      </span>
+                    </td>
+                    <td>
+                      <button className="ali-action-btn ali-view">
+                        View
+                      </button>
+                      <button className="ali-action-btn ali-edit">
+                        Edit
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div className="ali-card">
+        <div className="ali-card-header">
+          <h3>Recent Patient Registrations</h3>
+          <button className="ali-btn ali-btn-primary">
+            <i className="fas fa-users"></i>
+            Manage Users
+          </button>
+        </div>
+        <div className="ali-card-body">
+          <table>
+            <thead>
+              <tr>
+                <th>Patient Name</th>
+                <th>Email</th>
+                <th>Registration Date</th>
+                <th>Phone</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {fetchUsers()
+                .filter(user => user.role === 'patient')
+                .sort((a, b) => new Date(b.registrationDate) - new Date(a.registrationDate))
+                .slice(0, 5)
+                .map((user) => (
+                  <tr key={user.id}>
+                    <td>{user.fullName}</td>
+                    <td>{user.email}</td>
+                    <td>{new Date(user.registrationDate).toLocaleDateString()}</td>
+                    <td>{user.phone || 'N/A'}</td>
+                    <td>
+                      <span className={`ali-status ${user.status}`}>
+                        {user.status}
+                      </span>
+                    </td>
+                    <td>
+                      <button className="ali-action-btn ali-view">
+                        View
+                      </button>
+                      <button className="ali-action-btn ali-edit">
+                        Edit
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
 
       <div className="ali-chart-container">
         <h3>Patient Statistics Overview</h3>
@@ -1767,39 +3095,31 @@ const DashboardHome = () => {
 };
 
 // AdminSidebar Component
-const AdminSidebar = ({ isCollapsed, toggleCollapse, user }) => {
-  const location = useLocation();
-  const { data: stats } = useQuery({
-    queryKey: ['dashboard', 'stats'],
-    queryFn: fetchStats,
-  });
-
+const AdminSidebar = ({ isCollapsed, toggleCollapse, user, activePage, setActivePage }) => {
   const menuItems = [
     {
       section: "Main",
       items: [
-        { path: "/admin", icon: "fas fa-home", label: "Dashboard", active: location.pathname === "/admin" || location.pathname === "/" },
-        { path: "/admin/analytics", icon: "fas fa-chart-line", label: "Analytics" }
+        { key: "dashboard", icon: "fas fa-home", label: "Dashboard" },
+        { key: "analytics", icon: "fas fa-chart-line", label: "Analytics" }
       ]
     },
     {
       section: "Content Management",
       items: [
-        { path: "/admin/users", icon: "fas fa-users", label: "User Management" },
-        { path: "/admin/appointments", icon: "fas fa-calendar-check", label: "Appointments", badge: stats?.todayAppointments || 0 },
-        { path: "/admin/clinics", icon: "fas fa-clinic-medical", label: "Clinics" },
-        { path: "/admin/blog", icon: "fas fa-newspaper", label: "Blog" },
-        { path: "/admin/faqs", icon: "fas fa-question-circle", label: "FAQs" },
-        { path: "/admin/healthhub", icon: "fas fa-book", label: "Health Hub" },
-        { path: "/admin/sms-reminders", icon: "fas fa-bell", label: "SMS Reminders" },
-        { path: "/admin/emergency-logs", icon: "fas fa-exclamation-triangle", label: "Emergency Logs", badge: stats?.emergencyAlerts || 0 }
+        { key: "users", icon: "fas fa-users", label: "User Management" },
+        { key: "appointments", icon: "fas fa-calendar-check", label: "Appointments", badge: fetchStats().todayAppointments },
+        { key: "blog", icon: "fas fa-newspaper", label: "Blog" },
+        { key: "faqs", icon: "fas fa-question-circle", label: "FAQs" },
+        { key: "healthhub", icon: "fas fa-book", label: "Health Hub" },
+        { key: "sms-reminders", icon: "fas fa-bell", label: "SMS Reminders" },
+        { key: "emergency-logs", icon: "fas fa-exclamation-triangle", label: "Emergency Logs", badge: fetchStats().emergencyAlerts }
       ]
     },
     {
       section: "System",
       items: [
-        { path: "/admin/settings", icon: "fas fa-cog", label: "Settings" },
-        { path: "/admin/pages", icon: "fas fa-file-alt", label: "Pages" }
+        { key: "settings", icon: "fas fa-cog", label: "Settings" }
       ]
     }
   ];
@@ -1821,14 +3141,14 @@ const AdminSidebar = ({ isCollapsed, toggleCollapse, user }) => {
             <ul>
               {section.items.map((item, itemIndex) => (
                 <li key={itemIndex}>
-                  <Link 
-                    to={item.path}
-                    className={`${location.pathname === item.path || item.active ? 'ali-active' : ''}`}
+                  <div 
+                    className={`${activePage === item.key ? 'ali-active' : ''}`}
+                    onClick={() => setActivePage(item.key)}
                   >
                     <i className={item.icon}></i>
                     <span>{item.label}</span>
                     {item.badge && <span className="ali-badge">{item.badge}</span>}
-                  </Link>
+                  </div>
                 </li>
               ))}
             </ul>
@@ -1853,14 +3173,11 @@ const AdminSidebar = ({ isCollapsed, toggleCollapse, user }) => {
 const AdminTopNav = ({ user, logout, toggleNotifications, notificationCount }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [showUserMenu, setShowUserMenu] = useState(false);
-  const navigate = useNavigate();
 
   const handleSearch = (e) => {
     setSearchQuery(e.target.value);
     if (e.target.value.length > 2) {
-      // Perform search
       console.log('Searching for:', e.target.value);
-      // In a real app, you would call an API here
     }
   };
 
@@ -1870,7 +3187,7 @@ const AdminTopNav = ({ user, logout, toggleNotifications, notificationCount }) =
 
   const handleKeyPress = (e) => {
     if (e.key === 'Enter' && searchQuery.trim() !== '') {
-      navigate('/admin/search?q=' + encodeURIComponent(searchQuery));
+      console.log('Searching for:', searchQuery);
       setSearchQuery('');
     }
   };
@@ -1903,11 +3220,11 @@ const AdminTopNav = ({ user, logout, toggleNotifications, notificationCount }) =
           
           {showUserMenu && (
             <div className="ali-user-menu">
-              <div className="ali-menu-item" onClick={() => navigate('/admin/profile')}>
+              <div className="ali-menu-item">
                 <i className="fas fa-user"></i>
                 <span>My Profile</span>
               </div>
-              <div className="ali-menu-item" onClick={() => navigate('/admin/settings')}>
+              <div className="ali-menu-item">
                 <i className="fas fa-cog"></i>
                 <span>Settings</span>
               </div>
@@ -1962,314 +3279,16 @@ const NotificationsPanel = ({ isOpen, notifications, markAsRead, closePanel }) =
   );
 };
 
-// StatsCard Component
-const StatsCard = () => {
-  const { data: stats } = useQuery({
-    queryKey: ['dashboard', 'stats'],
-    queryFn: fetchStats,
-  });
-
-  const statsData = [
-    {
-      title: "Total Patients",
-      value: stats?.totalPatients || 0,
-      change: "+12.5%",
-      changeType: "ali-positive",
-      icon: "fas fa-users",
-      iconClass: "ali-primary"
-    },
-    {
-      title: "Active Pregnancies",
-      value: stats?.activePregnancies || 0,
-      change: "+8.3%",
-      changeType: "ali-positive",
-      icon: "fas fa-baby",
-      iconClass: "ali-success"
-    },
-    {
-      title: "Today's Appointments",
-      value: stats?.todayAppointments || 0,
-      change: "-3.1%",
-      changeType: "ali-negative",
-      icon: "fas fa-calendar-check",
-      iconClass: "ali-warning"
-    },
-    {
-      title: "Emergency Alerts",
-      value: stats?.emergencyAlerts || 0,
-      change: "-25%",
-      changeType: "ali-positive",
-      icon: "fas fa-exclamation-triangle",
-      iconClass: "ali-info"
-    }
-  ];
-
-  return (
-    <div className="ali-stats-cards">
-      {statsData.map((stat, index) => (
-        <div key={index} className="ali-stat-card">
-          <div className="ali-stat-card-header">
-            <h3>{stat.title}</h3>
-            <div className={`ali-stat-card-icon ${stat.iconClass}`}>
-              <i className={stat.icon}></i>
-            </div>
-          </div>
-          <div className="ali-value">{stat.value.toLocaleString()}</div>
-          <div className={`ali-change ${stat.changeType}`}>
-            <i className={`fas fa-arrow-${stat.changeType === 'ali-positive' ? 'up' : 'down'}`}></i>
-            <span>{stat.change}</span> from last month
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-};
-
-// RecentUser Component
-const RecentUser = () => {
-  const queryClient = useQueryClient();
-  const navigate = useNavigate();
-  
-  const { data: users } = useQuery({
-    queryKey: ['users'],
-    queryFn: fetchUsers,
-  });
-
-  const deleteUserMutation = useMutation({
-    mutationFn: (userId) => apiRequest('DELETE', `/api/users/${userId}`),
-    onSuccess: () => {
-      queryClient.invalidateQueries(['users']);
-      queryClient.invalidateQueries(['dashboard', 'stats']);
-    },
-  });
-
-  const handleViewUser = (userId) => {
-    navigate(`/admin/users/${userId}`);
-  };
-
-  const handleEditUser = (userId) => {
-    navigate(`/admin/users/edit/${userId}`);
-  };
-
-  const handleDeleteUser = (userId) => {
-    if (window.confirm('Are you sure you want to delete this user?')) {
-      deleteUserMutation.mutate(userId);
-    }
-  };
-
-  const recentUsers = (users || [])
-    .filter(user => user.role === 'patient')
-    .sort((a, b) => new Date(b.registrationDate) - new Date(a.registrationDate))
-    .slice(0, 5);
-
-  return (
-    <div className="ali-card">
-      <div className="ali-card-header">
-        <h3>Recent Patient Registrations</h3>
-        <button 
-          className="ali-btn ali-btn-primary"
-          onClick={() => navigate('/admin/users')}
-        >
-          <i className="fas fa-users"></i>
-          Manage Users
-        </button>
-      </div>
-      <div className="ali-card-body">
-        <table>
-          <thead>
-            <tr>
-              <th>Patient Name</th>
-              <th>Email</th>
-              <th>Registration Date</th>
-              <th>Phone</th>
-              <th>Status</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {recentUsers.map((user) => (
-              <tr key={user.id}>
-                <td>{user.fullName}</td>
-                <td>{user.email}</td>
-                <td>{new Date(user.registrationDate).toLocaleDateString()}</td>
-                <td>{user.phone || 'N/A'}</td>
-                <td>
-                  <span className={`ali-status ${user.status}`}>
-                    {user.status}
-                  </span>
-                </td>
-                <td>
-                  <button 
-                    className="ali-action-btn ali-view"
-                    onClick={() => handleViewUser(user.id)}
-                  >
-                    View
-                  </button>
-                  <button 
-                    className="ali-action-btn ali-edit"
-                    onClick={() => handleEditUser(user.id)}
-                  >
-                    Edit
-                  </button>
-                  {user.status === 'inactive' && (
-                    <button 
-                      className="ali-action-btn ali-delete"
-                      onClick={() => handleDeleteUser(user.id)}
-                      disabled={deleteUserMutation.isLoading}
-                    >
-                      Delete
-                    </button>
-                  )}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-        {recentUsers.length === 0 && (
-          <div className="ali-no-results">
-            <i className="fas fa-user-slash"></i>
-            <p>No recent patient registrations found</p>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-};
-
-// RecentAppointments Component
-const RecentAppointments = () => {
-  const queryClient = useQueryClient();
-  const navigate = useNavigate();
-  
-  const { data: appointments } = useQuery({
-    queryKey: ['appointments', 'today'],
-    queryFn: fetchAppointments,
-  });
-
-  const updateAppointmentMutation = useMutation({
-    mutationFn: ({ id, data }) => apiRequest('PUT', `/api/appointments/${id}`, data),
-    onSuccess: () => {
-      queryClient.invalidateQueries(['appointments']);
-      queryClient.invalidateQueries(['dashboard', 'stats']);
-    },
-  });
-
-  const deleteAppointmentMutation = useMutation({
-    mutationFn: (appointmentId) => apiRequest('DELETE', `/api/appointments/${appointmentId}`),
-    onSuccess: () => {
-      queryClient.invalidateQueries(['appointments']);
-      queryClient.invalidateQueries(['dashboard', 'stats']);
-    },
-  });
-
-  const handleViewAppointment = (appointmentId) => {
-    navigate(`/admin/appointments/${appointmentId}`);
-  };
-
-  const handleEditAppointment = (appointmentId) => {
-    navigate(`/admin/appointments/edit/${appointmentId}`);
-  };
-
-  const handleDeleteAppointment = (appointmentId) => {
-    if (window.confirm('Are you sure you want to delete this appointment?')) {
-      deleteAppointmentMutation.mutate(appointmentId);
-    }
-  };
-
-  const viewAllAppointments = () => {
-    navigate('/admin/appointments');
-  };
-
-  const today = new Date().toISOString().split('T')[0];
-  const todaysAppointments = (appointments || [])
-    .filter(appt => appt.date === today)
-    .sort((a, b) => a.appointmentTime.localeCompare(b.appointmentTime));
-
-  return (
-    <div className="ali-card">
-      <div className="ali-card-header">
-        <h3>Today's Appointments</h3>
-        <button className="ali-btn ali-btn-primary" onClick={viewAllAppointments}>
-          <i className="fas fa-eye"></i>
-          View All
-        </button>
-      </div>
-      <div className="ali-card-body">
-        <table>
-          <thead>
-            <tr>
-              <th>Patient Name</th>
-              <th>Time</th>
-              <th>Type</th>
-              <th>Doctor</th>
-              <th>Status</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {todaysAppointments.map((appointment) => (
-              <tr key={appointment.id}>
-                <td>{appointment.patientName}</td>
-                <td>{appointment.appointmentTime}</td>
-                <td>{appointment.type}</td>
-                <td>{appointment.doctorName}</td>
-                <td>
-                  <span className={`ali-status ${appointment.status}`}>
-                    {appointment.status}
-                  </span>
-                </td>
-                <td>
-                  <button 
-                    className="ali-action-btn ali-view"
-                    onClick={() => handleViewAppointment(appointment.id)}
-                  >
-                    View
-                  </button>
-                  <button 
-                    className="ali-action-btn ali-edit"
-                    onClick={() => handleEditAppointment(appointment.id)}
-                  >
-                    Edit
-                  </button>
-                  {appointment.status === 'cancelled' && (
-                    <button 
-                      className="ali-action-btn ali-delete"
-                      onClick={() => handleDeleteAppointment(appointment.id)}
-                      disabled={deleteAppointmentMutation.isLoading}
-                    >
-                      Delete
-                    </button>
-                  )}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-        {todaysAppointments.length === 0 && (
-          <div className="ali-no-results">
-            <i className="fas fa-calendar-times"></i>
-            <p>No appointments scheduled for today</p>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-};
-
 // Main Admin Component
 const Admin = () => {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [notifications, setNotifications] = useState([]);
   const [notificationCount, setNotificationCount] = useState(0);
-  const navigate = useNavigate();
-
-  // Mock user data
-  const user = {
-    name: "Dr. Sarah Johnson",
-    role: "admin",
-    avatar: "https://images.unsplash.com/photo-1582750433449-648ed127bb54?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=400&h=400"
-  };
+  const [isAuthenticated, setIsAuthenticated] = useState(checkAuth());
+  const [user, setUser] = useState(null);
+  const [showLoginModal, setShowLoginModal] = useState(!isAuthenticated);
+  const [activePage, setActivePage] = useState('dashboard');
 
   // Mock notifications data
   useEffect(() => {
@@ -2333,52 +3352,91 @@ const Admin = () => {
     setNotificationCount(0);
   };
 
+  const handleLogin = async (credentials) => {
+    try {
+      const { user } = await loginUser(credentials);
+      setUser(user);
+      setIsAuthenticated(true);
+      setShowLoginModal(false);
+    } catch (error) {
+      throw error;
+    }
+  };
+
   const logout = () => {
-    console.log('User logged out');
-    navigate('/login');
+    logoutUser();
+    setIsAuthenticated(false);
+    setUser(null);
+    setShowLoginModal(true);
+  };
+
+  const renderActivePage = () => {
+    switch (activePage) {
+      case 'dashboard':
+        return <DashboardHome />;
+      case 'analytics':
+        return <AnalyticsPage />;
+      case 'users':
+        return <UserManagementPage />;
+      case 'appointments':
+        return <AppointmentsPage />;
+      case 'blog':
+        return <BlogPage />;
+      case 'faqs':
+        return <FAQsPage />;
+      case 'healthhub':
+        return <HealthHubPage />;
+      case 'sms-reminders':
+        return <SMSRemindersPage />;
+      case 'emergency-logs':
+        return <EmergencyLogsPage />;
+      case 'settings':
+        return <SettingsPage />;
+      default:
+        return <DashboardHome />;
+    }
   };
 
   return (
     <div className="ali-dashboard-container">
-      <AdminSidebar 
-        isCollapsed={isCollapsed} 
-        toggleCollapse={toggleCollapse}
-        user={user}
-      />
+      {showLoginModal && (
+        <LoginModal 
+          onLogin={handleLogin} 
+          onClose={() => setShowLoginModal(false)}
+        />
+      )}
       
-      <div className="ali-main-content">
-        <AdminTopNav 
-          user={user} 
-          logout={logout}
-          toggleNotifications={toggleNotifications}
-          notificationCount={notificationCount}
-        />
-        
-        <NotificationsPanel
-          isOpen={showNotifications}
-          notifications={notifications}
-          markAsRead={markAsRead}
-          closePanel={() => setShowNotifications(false)}
-        />
-        
-        <div className="ali-content-wrapper">
-          <Routes>
-            <Route path="/" element={<DashboardHome />} />
-            <Route path="/admin" element={<DashboardHome />} />
-            <Route path="/admin/analytics" element={<AnalyticsPage />} />
-            <Route path="/admin/users" element={<UserManagementPage />} />
-            <Route path="/admin/appointments" element={<AppointmentsPage />} />
-            <Route path="/admin/clinics" element={<ClinicsPage />} />
-            <Route path="/admin/blog" element={<BlogPage />} />
-            <Route path="/admin/faqs" element={<FAQsPage />} />
-            <Route path="/admin/healthhub" element={<HealthHubPage />} />
-            <Route path="/admin/sms-reminders" element={<SMSRemindersPage />} />
-            <Route path="/admin/emergency-logs" element={<EmergencyLogsPage />} />
-            <Route path="/admin/settings" element={<SettingsPage />} />
-            <Route path="/admin/pages" element={<PagesPage />} />
-          </Routes>
-        </div>
-      </div>
+      {isAuthenticated && (
+        <>
+          <AdminSidebar 
+            isCollapsed={isCollapsed} 
+            toggleCollapse={toggleCollapse}
+            user={user}
+            activePage={activePage}
+            setActivePage={setActivePage}
+          />
+          
+          <div className="ali-main-content">
+            <AdminTopNav 
+              user={user} 
+              logout={logout}
+              toggleNotifications={toggleNotifications}
+              notificationCount={notificationCount}
+            />
+            
+            <NotificationsPanel
+              isOpen={showNotifications}
+              notifications={notifications}
+              markAsRead={markAsRead}
+              closePanel={() => setShowNotifications(false)}
+            />
+            
+            <div className="ali-content-wrapper">
+              {renderActivePage()}
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 };

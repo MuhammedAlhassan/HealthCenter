@@ -9507,19 +9507,18 @@ background: #a282b8;
   --primary-light: #9c27b0;
   --primary-dark: #4a148c;
   --secondary-color: #e1bee7;
-  --accent-color: #ea80fc;
-  --text-color: #333;
-  --text-light: #666;
-  --text-lighter: #999;
-  --bg-color: #f8f9fa;
-  --card-bg: #ffffff;
+  --accent-color: #ff4081;
+  --text-color: #333333;
+  --text-light: #666666;
+  --text-lighter: #999999;
+  --bg-color: #ffffff;
+  --bg-light: #f5f5f5;
+  --bg-lighter: #fafafa;
   --border-color: #e0e0e0;
   --success-color: #4caf50;
   --warning-color: #ff9800;
   --danger-color: #f44336;
   --info-color: #2196f3;
-  --positive-change: #4caf50;
-  --negative-change: #f44336;
 }
 
 /* Base Styles */
@@ -9531,7 +9530,7 @@ background: #a282b8;
 }
 
 body {
-  background-color: var(--bg-color);
+  background-color: var(--bg-light);
   color: var(--text-color);
   line-height: 1.6;
 }
@@ -9545,22 +9544,26 @@ button {
   cursor: pointer;
   border: none;
   background: none;
+  outline: none;
 }
 
-/* Layout */
+/* Dashboard Layout */
 .ali-dashboard-container {
   display: flex;
   min-height: 100vh;
+  position: relative;
 }
 
 .ali-sidebar {
   width: 250px;
-  background-color: var(--card-bg);
+  background-color: var(--bg-color);
+  color: var(--text-color);
   box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
   transition: all 0.3s ease;
-  display: flex;
-  flex-direction: column;
+  position: fixed;
+  height: 100vh;
   z-index: 100;
+  overflow-y: auto;
 }
 
 .ali-sidebar.ali-collapsed {
@@ -9570,26 +9573,14 @@ button {
 .ali-sidebar.ali-collapsed .ali-sidebar-header h3,
 .ali-sidebar.ali-collapsed h4,
 .ali-sidebar.ali-collapsed .ali-sidebar-menu span,
+.ali-sidebar.ali-collapsed .ali-badge,
 .ali-sidebar.ali-collapsed .ali-user-name,
 .ali-sidebar.ali-collapsed .ali-user-role {
   display: none;
 }
 
-.ali-sidebar.ali-collapsed .ali-sidebar-menu li a {
+.ali-sidebar.ali-collapsed .ali-sidebar-menu li > div {
   justify-content: center;
-}
-
-.ali-sidebar.ali-collapsed .ali-sidebar-menu li a i {
-  margin-right: 0;
-}
-
-.ali-sidebar.ali-collapsed .ali-user-profile {
-  justify-content: center;
-  padding: 10px;
-}
-
-.ali-sidebar.ali-collapsed .ali-user-profile img {
-  margin-right: 0;
 }
 
 .ali-sidebar-header {
@@ -9601,62 +9592,63 @@ button {
 }
 
 .ali-sidebar-header h3 {
-  color: var(--primary-color);
   font-size: 18px;
+  color: var(--primary-color);
   font-weight: 600;
 }
 
 .ali-toggle-btn {
   cursor: pointer;
-  color: var(--text-light);
   font-size: 18px;
+  color: var(--primary-color);
 }
 
 .ali-sidebar-menu {
-  flex: 1;
-  overflow-y: auto;
   padding: 20px 0;
 }
 
 .ali-sidebar-menu h4 {
-  padding: 10px 20px;
-  color: var(--text-light);
   font-size: 12px;
   text-transform: uppercase;
-  letter-spacing: 1px;
+  color: var(--text-lighter);
+  padding: 0 20px 10px;
+  margin-top: 20px;
 }
 
 .ali-sidebar-menu ul {
   list-style: none;
-  margin-bottom: 20px;
 }
 
-.ali-sidebar-menu li a {
+.ali-sidebar-menu li > div {
+  padding: 12px 20px;
   display: flex;
   align-items: center;
-  padding: 12px 20px;
-  color: var(--text-color);
+  cursor: pointer;
   transition: all 0.2s;
+  color: var(--text-light);
 }
 
-.ali-sidebar-menu li a:hover {
-  background-color: rgba(106, 13, 173, 0.1);
+.ali-sidebar-menu li > div:hover {
+  background-color: var(--bg-light);
   color: var(--primary-color);
 }
 
-.ali-sidebar-menu li a.ali-active {
-  background-color: rgba(106, 13, 173, 0.1);
-  color: var(--primary-color);
+.ali-sidebar-menu li > div.ali-active {
+  background-color: var(--secondary-color);
+  color: var(--primary-dark);
   border-left: 3px solid var(--primary-color);
 }
 
-.ali-sidebar-menu li a i {
+.ali-sidebar-menu i {
   margin-right: 10px;
   font-size: 16px;
+  width: 20px;
+  text-align: center;
 }
 
-.ali-sidebar-menu li a span {
-  flex: 1;
+.ali-sidebar.ali-collapsed .ali-sidebar-menu i {
+  margin-right: 0;
+  font-size: 18px;
 }
 
 .ali-badge {
@@ -9665,11 +9657,15 @@ button {
   border-radius: 10px;
   padding: 2px 8px;
   font-size: 10px;
-  font-weight: bold;
+  margin-left: auto;
 }
 
 .ali-sidebar-footer {
-  padding: 15px;
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 20px;
   border-top: 1px solid var(--border-color);
 }
 
@@ -9693,24 +9689,28 @@ button {
 
 .ali-user-role {
   font-size: 12px;
-  color: var(--text-light);
+  color: var(--text-lighter);
 }
 
 .ali-main-content {
   flex: 1;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
+  margin-left: 250px;
+  transition: all 0.3s ease;
+}
+
+.ali-sidebar.ali-collapsed ~ .ali-main-content {
+  margin-left: 70px;
 }
 
 .ali-top-nav {
-  height: 70px;
-  background-color: var(--card-bg);
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  background-color: var(--bg-color);
+  padding: 15px 25px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 30px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  position: sticky;
+  top: 0;
   z-index: 90;
 }
 
@@ -9729,9 +9729,8 @@ button {
 }
 
 .ali-search-bar input:focus {
-  outline: none;
   border-color: var(--primary-light);
-  box-shadow: 0 0 0 2px rgba(156, 39, 176, 0.2);
+  box-shadow: 0 0 0 2px rgba(106, 13, 173, 0.2);
 }
 
 .ali-search-bar i {
@@ -9739,7 +9738,7 @@ button {
   left: 15px;
   top: 50%;
   transform: translateY(-50%);
-  color: var(--text-light);
+  color: var(--text-lighter);
 }
 
 .ali-user-actions {
@@ -9749,26 +9748,29 @@ button {
 
 .ali-notification-bell {
   position: relative;
-  margin-right: 20px;
+  margin-right: 25px;
   cursor: pointer;
   color: var(--text-light);
   font-size: 18px;
 }
 
+.ali-notification-bell:hover {
+  color: var(--primary-color);
+}
+
 .ali-notification-badge {
   position: absolute;
   top: -5px;
-  right: -5px;
+  right: -8px;
   background-color: var(--danger-color);
   color: white;
   border-radius: 50%;
   width: 18px;
   height: 18px;
+  font-size: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 10px;
-  font-weight: bold;
 }
 
 .ali-user-profile {
@@ -9787,24 +9789,23 @@ button {
 }
 
 .ali-user-profile span {
-  margin-right: 5px;
   font-weight: 500;
+  margin-right: 8px;
 }
 
 .ali-user-menu {
   position: absolute;
   top: 50px;
   right: 0;
+  background-color: var(--bg-color);
   width: 200px;
-  background-color: var(--card-bg);
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
   border-radius: 4px;
-  overflow: hidden;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
   z-index: 100;
   display: none;
 }
 
-.ali-user-profile:hover .ali-user-menu {
+.ali-user-menu.show {
   display: block;
 }
 
@@ -9816,13 +9817,14 @@ button {
 }
 
 .ali-menu-item:hover {
-  background-color: rgba(106, 13, 173, 0.1);
+  background-color: var(--bg-light);
   color: var(--primary-color);
 }
 
 .ali-menu-item i {
   margin-right: 10px;
-  font-size: 14px;
+  width: 20px;
+  text-align: center;
 }
 
 .ali-menu-divider {
@@ -9831,187 +9833,63 @@ button {
   margin: 5px 0;
 }
 
-.ali-notifications-panel {
-  position: absolute;
-  top: 70px;
-  right: 30px;
-  width: 350px;
-  max-height: 500px;
-  overflow-y: auto;
-  background-color: var(--card-bg);
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-  border-radius: 4px;
-  z-index: 100;
-}
-
-.ali-panel-header {
-  padding: 15px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  border-bottom: 1px solid var(--border-color);
-}
-
-.ali-panel-header h3 {
-  font-size: 16px;
-}
-
-.ali-panel-actions {
-  display: flex;
-  align-items: center;
-}
-
-.ali-panel-actions button {
-  background: none;
-  border: none;
-  color: var(--primary-color);
-  font-size: 12px;
-  margin-right: 10px;
-  cursor: pointer;
-}
-
-.ali-panel-actions i {
-  cursor: pointer;
-  color: var(--text-light);
-}
-
-.ali-notifications-list {
-  padding: 0;
-}
-
-.ali-notification-item {
-  padding: 15px;
-  border-bottom: 1px solid var(--border-color);
-  display: flex;
-}
-
-.ali-notification-item.ali-unread {
-  background-color: rgba(106, 13, 173, 0.05);
-}
-
-.ali-notification-icon {
-  width: 40px;
-  height: 40px;
-  background-color: rgba(106, 13, 173, 0.1);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-right: 15px;
-  color: var(--primary-color);
-}
-
-.ali-notification-content {
-  flex: 1;
-}
-
-.ali-notification-title {
-  font-weight: 600;
-  margin-bottom: 5px;
-}
-
-.ali-notification-message {
-  font-size: 13px;
-  color: var(--text-light);
-  margin-bottom: 5px;
-}
-
-.ali-notification-time {
-  font-size: 11px;
-  color: var(--text-lighter);
-}
-
-.ali-no-notifications {
-  padding: 30px;
-  text-align: center;
-  color: var(--text-light);
-}
-
-.ali-no-notifications i {
-  font-size: 30px;
-  margin-bottom: 10px;
-  color: var(--text-lighter);
-}
-
 .ali-content-wrapper {
-  flex: 1;
-  overflow-y: auto;
-  padding: 30px;
+  padding: 25px;
 }
 
 .ali-page-content {
-  max-width: 1200px;
-  margin: 0 auto;
-  width: 100%;
+  background-color: var(--bg-color);
+  border-radius: 6px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  padding: 25px;
+  margin-bottom: 25px;
 }
 
 .ali-page-header {
   display: flex;
-  align-items: center;
   justify-content: space-between;
-  margin-bottom: 30px;
+  align-items: flex-start;
+  margin-bottom: 25px;
 }
 
 .ali-page-header h2 {
+  color: var(--primary-color);
   font-size: 24px;
-  color: var(--primary-dark);
+  margin-bottom: 5px;
 }
 
 .ali-page-subtitle {
   color: var(--text-light);
   font-size: 14px;
-  margin-top: 5px;
 }
 
-/* Cards */
-.ali-card {
-  background-color: var(--card-bg);
-  border-radius: 8px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-  margin-bottom: 30px;
-}
-
-.ali-card-header {
-  padding: 20px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  border-bottom: 1px solid var(--border-color);
-}
-
-.ali-card-header h3 {
-  font-size: 18px;
-}
-
-.ali-card-body {
-  padding: 20px;
-}
-
-/* Stats Cards */
+/* Cards & Stats */
 .ali-stats-cards {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
   gap: 20px;
   margin-bottom: 30px;
 }
 
 .ali-stat-card {
-  background-color: var(--card-bg);
-  border-radius: 8px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  background-color: var(--bg-color);
+  border-radius: 6px;
   padding: 20px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  border-left: 4px solid var(--primary-color);
 }
 
 .ali-stat-card-header {
   display: flex;
-  align-items: center;
   justify-content: space-between;
+  align-items: center;
   margin-bottom: 15px;
 }
 
 .ali-stat-card-header h3 {
   font-size: 14px;
   color: var(--text-light);
+  font-weight: 500;
 }
 
 .ali-stat-card-icon {
@@ -10047,8 +9925,8 @@ button {
 .ali-value {
   font-size: 28px;
   font-weight: 600;
-  margin-bottom: 10px;
-  color: var(--primary-dark);
+  color: var(--text-color);
+  margin-bottom: 5px;
 }
 
 .ali-change {
@@ -10063,250 +9941,53 @@ button {
 }
 
 .ali-change.ali-positive {
-  color: var(--positive-change);
+  color: var(--success-color);
 }
 
 .ali-change.ali-negative {
-  color: var(--negative-change);
+  color: var(--danger-color);
 }
 
-/* Tables */
-table {
-  width: 100%;
-  border-collapse: collapse;
+.ali-card {
+  background-color: var(--bg-color);
+  border-radius: 6px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  margin-bottom: 25px;
 }
 
-th {
-  text-align: left;
-  padding: 12px 15px;
-  background-color: rgba(106, 13, 173, 0.05);
-  color: var(--text-color);
-  font-weight: 600;
-  font-size: 13px;
-  text-transform: uppercase;
-}
-
-td {
-  padding: 12px 15px;
+.ali-card-header {
+  padding: 20px;
   border-bottom: 1px solid var(--border-color);
-  font-size: 14px;
-}
-
-tr:hover td {
-  background-color: rgba(106, 13, 173, 0.03);
-}
-
-/* Status Badges */
-.ali-status-badge {
-  padding: 5px 10px;
-  border-radius: 20px;
-  font-size: 12px;
-  font-weight: 500;
-  display: inline-block;
-}
-
-.ali-status-badge.active,
-.ali-status-badge.published,
-.ali-status-badge.confirmed,
-.ali-status-badge.scheduled,
-.ali-status-badge.delivered,
-.ali-status-badge.resolved {
-  background-color: rgba(76, 175, 80, 0.1);
-  color: var(--success-color);
-}
-
-.ali-status-badge.inactive,
-.ali-status-badge.draft,
-.ali-status-badge.cancelled,
-.ali-status-badge.failed,
-.ali-status-badge.pending {
-  background-color: rgba(255, 152, 0, 0.1);
-  color: var(--warning-color);
-}
-
-.ali-status-badge.completed {
-  background-color: rgba(33, 150, 243, 0.1);
-  color: var(--info-color);
-}
-
-.ali-status-badge.escalated {
-  background-color: rgba(244, 67, 54, 0.1);
-  color: var(--danger-color);
-}
-
-/* Role Badges */
-.ali-role-badge {
-  padding: 5px 10px;
-  border-radius: 20px;
-  font-size: 12px;
-  font-weight: 500;
-  display: inline-block;
-}
-
-.ali-role-badge.patient {
-  background-color: rgba(156, 39, 176, 0.1);
-  color: var(--primary-light);
-}
-
-.ali-role-badge.doctor {
-  background-color: rgba(33, 150, 243, 0.1);
-  color: var(--info-color);
-}
-
-.ali-role-badge.nurse {
-  background-color: rgba(76, 175, 80, 0.1);
-  color: var(--success-color);
-}
-
-.ali-role-badge.admin {
-  background-color: rgba(255, 152, 0, 0.1);
-  color: var(--warning-color);
-}
-
-/* Category Badges */
-.ali-category-badge {
-  padding: 5px 10px;
-  border-radius: 20px;
-  font-size: 12px;
-  font-weight: 500;
-  display: inline-block;
-}
-
-.ali-category-badge.nutrition,
-.ali-category-badge.prenatal-care {
-  background-color: rgba(156, 39, 176, 0.1);
-  color: var(--primary-light);
-}
-
-.ali-category-badge.fitness,
-.ali-category-badge.pregnancy-health {
-  background-color: rgba(33, 150, 243, 0.1);
-  color: var(--info-color);
-}
-
-.ali-category-badge.health,
-.ali-category-badge.labor-delivery {
-  background-color: rgba(76, 175, 80, 0.1);
-  color: var(--success-color);
-}
-
-.ali-category-badge.lifestyle,
-.ali-category-badge.postpartum {
-  background-color: rgba(255, 152, 0, 0.1);
-  color: var(--warning-color);
-}
-
-/* Buttons */
-.ali-btn {
-  padding: 8px 15px;
-  border-radius: 4px;
-  font-size: 14px;
-  font-weight: 500;
-  display: inline-flex;
+  display: flex;
+  justify-content: space-between;
   align-items: center;
-  transition: all 0.2s;
 }
 
-.ali-btn i {
-  margin-right: 8px;
-  font-size: 14px;
+.ali-card-header h3 {
+  font-size: 18px;
+  color: var(--text-color);
 }
 
-.ali-btn-primary {
-  background-color: var(--primary-color);
-  color: white;
+.ali-card-body {
+  padding: 20px;
 }
 
-.ali-btn-primary:hover {
-  background-color: var(--primary-light);
-}
-
-.ali-btn-secondary {
-  background-color: white;
-  color: var(--primary-color);
-  border: 1px solid var(--primary-color);
-}
-
-.ali-btn-secondary:hover {
-  background-color: rgba(106, 13, 173, 0.1);
-}
-
-.ali-btn-icon {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  background-color: rgba(106, 13, 173, 0.1);
-  color: var(--primary-color);
-}
-
-.ali-btn-icon:hover {
-  background-color: rgba(106, 13, 173, 0.2);
-}
-
-.ali-btn-icon.ali-danger {
-  background-color: rgba(244, 67, 54, 0.1);
-  color: var(--danger-color);
-}
-
-.ali-btn-icon.ali-danger:hover {
-  background-color: rgba(244, 67, 54, 0.2);
-}
-
-.ali-action-btn {
-  padding: 5px 10px;
-  border-radius: 4px;
-  font-size: 12px;
-  font-weight: 500;
-  margin-right: 5px;
-  transition: all 0.2s;
-}
-
-.ali-action-btn.ali-view {
-  background-color: rgba(33, 150, 243, 0.1);
-  color: var(--info-color);
-}
-
-.ali-action-btn.ali-view:hover {
-  background-color: rgba(33, 150, 243, 0.2);
-}
-
-.ali-action-btn.ali-edit {
-  background-color: rgba(156, 39, 176, 0.1);
-  color: var(--primary-light);
-}
-
-.ali-action-btn.ali-edit:hover {
-  background-color: rgba(156, 39, 176, 0.2);
-}
-
-.ali-action-btn.ali-delete {
-  background-color: rgba(244, 67, 54, 0.1);
-  color: var(--danger-color);
-}
-
-.ali-action-btn.ali-delete:hover {
-  background-color: rgba(244, 67, 54, 0.2);
-}
-
-/* Quick Actions */
 .ali-quick-actions {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
   gap: 20px;
   margin-bottom: 30px;
 }
 
 .ali-quick-action-card {
-  background-color: var(--card-bg);
-  border-radius: 8px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  background-color: var(--bg-color);
+  border-radius: 6px;
   padding: 20px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
   text-align: center;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.3s;
+  border-top: 3px solid var(--primary-color);
 }
 
 .ali-quick-action-card:hover {
@@ -10319,18 +10000,18 @@ tr:hover td {
   height: 50px;
   border-radius: 50%;
   background-color: rgba(106, 13, 173, 0.1);
-  color: var(--primary-color);
   display: flex;
   align-items: center;
   justify-content: center;
   margin: 0 auto 15px;
+  color: var(--primary-color);
   font-size: 20px;
 }
 
 .ali-quick-action-title {
   font-weight: 600;
   margin-bottom: 5px;
-  color: var(--primary-dark);
+  color: var(--text-color);
 }
 
 .ali-quick-action-desc {
@@ -10338,124 +10019,181 @@ tr:hover td {
   color: var(--text-light);
 }
 
-/* User Info */
-.ali-user-info {
-  display: flex;
-  align-items: center;
+/* Tables */
+table {
+  width: 100%;
+  border-collapse: collapse;
 }
 
-.ali-user-avatar {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
+th {
+  text-align: left;
+  padding: 12px 15px;
+  background-color: var(--bg-light);
+  color: var(--text-light);
+  font-weight: 500;
+  font-size: 13px;
+  text-transform: uppercase;
+}
+
+td {
+  padding: 12px 15px;
+  border-bottom: 1px solid var(--border-color);
+  font-size: 14px;
+}
+
+tr:last-child td {
+  border-bottom: none;
+}
+
+.ali-status {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.ali-status.scheduled {
+  background-color: rgba(33, 150, 243, 0.1);
+  color: var(--info-color);
+}
+
+.ali-status.confirmed {
+  background-color: rgba(76, 175, 80, 0.1);
+  color: var(--success-color);
+}
+
+.ali-status.completed {
   background-color: rgba(106, 13, 173, 0.1);
   color: var(--primary-color);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-right: 10px;
-  font-weight: 600;
 }
 
-.ali-user-details {
-  display: flex;
-  flex-direction: column;
+.ali-status.cancelled {
+  background-color: rgba(244, 67, 54, 0.1);
+  color: var(--danger-color);
 }
 
-.ali-user-name {
-  font-weight: 500;
+.ali-status.pending {
+  background-color: rgba(255, 152, 0, 0.1);
+  color: var(--warning-color);
 }
 
-.ali-user-phone {
+.ali-action-btn {
+  padding: 6px 12px;
+  border-radius: 4px;
   font-size: 12px;
-  color: var(--text-light);
-}
-
-/* Patient Info */
-.ali-patient-info {
-  display: flex;
-  align-items: center;
-}
-
-.ali-patient-avatar {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  background-color: rgba(106, 13, 173, 0.1);
-  color: var(--primary-color);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-right: 10px;
-  font-weight: 600;
-}
-
-.ali-patient-details {
-  display: flex;
-  flex-direction: column;
-}
-
-.ali-patient-name {
   font-weight: 500;
-}
-
-.ali-patient-id {
-  font-size: 12px;
-  color: var(--text-light);
-}
-
-/* Appointment Time */
-.ali-appointment-time {
-  display: flex;
-  flex-direction: column;
-}
-
-.ali-appointment-date {
-  font-weight: 500;
-}
-
-.ali-appointment-hour {
-  font-size: 12px;
-  color: var(--text-light);
-}
-
-/* Action Buttons */
-.ali-action-buttons {
-  display: flex;
-  align-items: center;
-}
-
-.ali-action-buttons button {
   margin-right: 5px;
 }
 
-.ali-action-buttons button:last-child {
-  margin-right: 0;
+.ali-action-btn.ali-view {
+  background-color: rgba(33, 150, 243, 0.1);
+  color: var(--info-color);
 }
 
-/* No Results */
-.ali-no-results {
-  padding: 30px;
-  text-align: center;
-  color: var(--text-light);
+.ali-action-btn.ali-edit {
+  background-color: rgba(106, 13, 173, 0.1);
+  color: var(--primary-color);
 }
 
-.ali-no-results i {
-  font-size: 30px;
-  margin-bottom: 10px;
+.ali-action-btn:hover {
+  opacity: 0.8;
+}
+
+/* Charts */
+.ali-chart-container {
+  background-color: var(--bg-color);
+  border-radius: 6px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  padding: 20px;
+  margin-bottom: 25px;
+}
+
+.ali-chart-container h3 {
+  margin-bottom: 15px;
+  color: var(--text-color);
+}
+
+.ali-chart-placeholder {
+  height: 300px;
+  background-color: var(--bg-light);
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   color: var(--text-lighter);
 }
 
-/* Form Elements */
+/* Buttons */
+.ali-btn {
+  padding: 10px 15px;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.2s;
+  display: inline-flex;
+  align-items: center;
+}
+
+.ali-btn i {
+  margin-right: 8px;
+}
+
+.ali-btn-primary {
+  background-color: var(--primary-color);
+  color: white;
+}
+
+.ali-btn-primary:hover {
+  background-color: var(--primary-light);
+  box-shadow: 0 3px 10px rgba(106, 13, 173, 0.3);
+}
+
+.ali-btn-secondary {
+  background-color: var(--bg-light);
+  color: var(--text-color);
+  border: 1px solid var(--border-color);
+}
+
+.ali-btn-secondary:hover {
+  background-color: var(--border-color);
+}
+
+.ali-btn-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-light);
+  background-color: transparent;
+}
+
+.ali-btn-icon:hover {
+  background-color: var(--bg-light);
+  color: var(--primary-color);
+}
+
+.ali-btn-icon.ali-danger {
+  color: var(--danger-color);
+}
+
+.ali-btn-icon.ali-danger:hover {
+  background-color: rgba(244, 67, 54, 0.1);
+}
+
+/* Forms */
 .ali-form-group {
-  margin-bottom: 20px;
+  margin-bottom: 15px;
 }
 
 .ali-form-group label {
   display: block;
-  margin-bottom: 8px;
-  font-weight: 500;
+  margin-bottom: 5px;
   font-size: 14px;
+  color: var(--text-light);
+  font-weight: 500;
 }
 
 .ali-form-group input,
@@ -10472,9 +10210,9 @@ tr:hover td {
 .ali-form-group input:focus,
 .ali-form-group select:focus,
 .ali-form-group textarea:focus {
-  outline: none;
   border-color: var(--primary-light);
-  box-shadow: 0 0 0 2px rgba(156, 39, 176, 0.2);
+  box-shadow: 0 0 0 2px rgba(106, 13, 173, 0.2);
+  outline: none;
 }
 
 .ali-form-group textarea {
@@ -10482,280 +10220,498 @@ tr:hover td {
   resize: vertical;
 }
 
-.ali-form-group.ali-checkbox {
+.ali-form-row {
+  display: flex;
+  gap: 15px;
+}
+
+.ali-form-row .ali-form-group {
+  flex: 1;
+}
+
+.ali-form-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.ali-checkbox {
   display: flex;
   align-items: center;
 }
 
-.ali-form-group.ali-checkbox input {
-  width: auto;
+.ali-checkbox input {
   margin-right: 10px;
 }
 
-/* Settings Actions */
-.ali-settings-actions {
-  display: flex;
-  justify-content: flex-end;
-  margin-top: 30px;
+.ali-checkbox label {
+  margin-bottom: 0;
 }
 
-.ali-settings-actions button {
-  margin-left: 10px;
+.ali-form-error {
+  color: var(--danger-color);
+  font-size: 13px;
+  margin-top: 5px;
+}
+
+/* Modals */
+.ali-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.ali-modal {
+  background-color: var(--bg-color);
+  border-radius: 6px;
+  width: 100%;
+  max-width: 500px;
+  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
+  overflow: hidden;
+}
+
+.ali-modal-header {
+  padding: 20px;
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.ali-modal-header h2 {
+  font-size: 20px;
+  color: var(--text-color);
+}
+
+.ali-modal-close {
+  background: none;
+  border: none;
+  font-size: 20px;
+  color: var(--text-light);
+  cursor: pointer;
+}
+
+.ali-modal-close:hover {
+  color: var(--text-color);
+}
+
+.ali-modal-body {
+  padding: 20px;
+}
+
+/* Notifications Panel */
+.ali-notifications-panel {
+  position: fixed;
+  top: 70px;
+  right: 25px;
+  width: 350px;
+  background-color: var(--bg-color);
+  border-radius: 6px;
+  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
+  z-index: 1000;
+  overflow: hidden;
+}
+
+.ali-panel-header {
+  padding: 15px 20px;
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.ali-panel-header h3 {
+  font-size: 16px;
+  color: var(--text-color);
+}
+
+.ali-panel-actions {
+  display: flex;
+  align-items: center;
+}
+
+.ali-panel-actions button {
+  background: none;
+  border: none;
+  color: var(--primary-color);
+  font-size: 13px;
+  font-weight: 500;
+  margin-right: 15px;
+  cursor: pointer;
+}
+
+.ali-panel-actions i {
+  color: var(--text-light);
+  cursor: pointer;
+}
+
+.ali-panel-actions i:hover {
+  color: var(--text-color);
+}
+
+.ali-notifications-list {
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.ali-notification-item {
+  padding: 15px 20px;
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  transition: all 0.2s;
+}
+
+.ali-notification-item:hover {
+  background-color: var(--bg-light);
+}
+
+.ali-notification-item.ali-unread {
+  background-color: rgba(106, 13, 173, 0.05);
+}
+
+.ali-notification-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background-color: var(--bg-light);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 15px;
+  color: var(--primary-color);
+  font-size: 16px;
+}
+
+.ali-notification-content {
+  flex: 1;
+}
+
+.ali-notification-title {
+  font-weight: 600;
+  margin-bottom: 3px;
+  color: var(--text-color);
+}
+
+.ali-notification-message {
+  font-size: 13px;
+  color: var(--text-light);
+  margin-bottom: 5px;
+}
+
+.ali-notification-time {
+  font-size: 11px;
+  color: var(--text-lighter);
+}
+
+.ali-no-notifications {
+  padding: 30px 20px;
+  text-align: center;
+  color: var(--text-lighter);
+}
+
+.ali-no-notifications i {
+  font-size: 30px;
+  margin-bottom: 10px;
+  opacity: 0.5;
+}
+
+.ali-no-notifications p {
+  font-size: 14px;
 }
 
 /* Loading Spinner */
 .ali-loading-spinner {
+  display: inline-block;
   width: 40px;
   height: 40px;
-  border: 4px solid rgba(106, 13, 173, 0.1);
-  border-top: 4px solid var(--primary-color);
+  border: 3px solid rgba(106, 13, 173, 0.2);
   border-radius: 50%;
-  animation: spin 1s linear infinite;
-  margin: 50px auto;
+  border-top-color: var(--primary-color);
+  animation: spin 1s ease-in-out infinite;
+  margin: 20px auto;
+  display: block;
 }
 
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  to { transform: rotate(360deg); }
 }
 
-/* Chart Placeholder */
-.ali-chart-placeholder {
-  background-color: var(--card-bg);
-  border-radius: 8px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-  padding: 40px;
+/* No Results */
+.ali-no-results {
   text-align: center;
-  color: var(--text-light);
-  margin-bottom: 30px;
+  padding: 40px 20px;
+  color: var(--text-lighter);
 }
 
-.ali-chart-placeholder i {
-  font-size: 50px;
-  margin-bottom: 20px;
-  color: var(--primary-light);
+.ali-no-results i {
+  font-size: 40px;
+  margin-bottom: 15px;
   opacity: 0.5;
 }
 
-.ali-chart-placeholder p {
+.ali-no-results p {
   font-size: 16px;
 }
 
-.ali-chart-placeholder.ali-pie {
-  height: 300px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-}
-
-/* Analytics Grid */
-.ali-analytics-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 20px;
-  margin-bottom: 30px;
-}
-
-.ali-analytics-card {
-  background-color: var(--card-bg);
-  border-radius: 8px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-  padding: 20px;
-}
-
-.ali-analytics-card h3 {
-  font-size: 16px;
-  margin-bottom: 15px;
-  color: var(--primary-dark);
-}
-
-.ali-analytics-card.ali-wide {
-  grid-column: span 2;
-}
-
-.ali-metrics-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-  gap: 15px;
-}
-
-.ali-metric-item {
-  text-align: center;
-  padding: 15px;
-  background-color: rgba(106, 13, 173, 0.05);
-  border-radius: 4px;
-}
-
-.ali-metric-value {
-  font-size: 24px;
-  font-weight: 600;
-  color: var(--primary-dark);
-  margin-bottom: 5px;
-}
-
-.ali-metric-label {
+/* Status Badges */
+.ali-status-badge {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 20px;
   font-size: 12px;
-  color: var(--text-light);
+  font-weight: 500;
 }
 
-/* User Table Container */
-.ali-user-table-container,
-.ali-appointment-table-container,
-.ali-blog-table-container,
-.ali-pages-table-container,
-.ali-reminder-table-container {
-  background-color: var(--card-bg);
-  border-radius: 8px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-  overflow: hidden;
+.ali-status-badge.active,
+.ali-status-badge.published,
+.ali-status-badge.confirmed,
+.ali-status-badge.delivered,
+.ali-status-badge.resolved {
+  background-color: rgba(76, 175, 80, 0.1);
+  color: var(--success-color);
 }
 
-/* Clinic Cards */
-.ali-clinic-cards {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-  gap: 20px;
-  margin-bottom: 30px;
+.ali-status-badge.inactive,
+.ali-status-badge.draft,
+.ali-status-badge.scheduled,
+.ali-status-badge.pending {
+  background-color: rgba(255, 152, 0, 0.1);
+  color: var(--warning-color);
 }
 
-.ali-clinic-card {
-  background-color: var(--card-bg);
-  border-radius: 8px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-  overflow: hidden;
+.ali-status-badge.cancelled,
+.ali-status-badge.failed {
+  background-color: rgba(244, 67, 54, 0.1);
+  color: var(--danger-color);
 }
 
-.ali-clinic-header {
-  padding: 15px 20px;
-  background-color: var(--primary-color);
-  color: white;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.ali-clinic-header h3 {
-  font-size: 16px;
-}
-
-.ali-clinic-actions button {
-  color: white;
-  opacity: 0.8;
-  transition: all 0.2s;
-}
-
-.ali-clinic-actions button:hover {
-  opacity: 1;
-}
-
-.ali-clinic-details {
-  padding: 20px;
-}
-
-.ali-clinic-address,
-.ali-clinic-hours {
-  display: flex;
-  align-items: flex-start;
-  margin-bottom: 15px;
-}
-
-.ali-clinic-address i,
-.ali-clinic-hours i {
-  margin-right: 10px;
-  color: var(--primary-color);
-}
-
-.ali-clinic-contact {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 15px;
-  margin-bottom: 15px;
-}
-
-.ali-contact-item {
-  display: flex;
-  align-items: center;
-}
-
-.ali-contact-item i {
-  margin-right: 10px;
-  color: var(--primary-color);
-}
-
-.ali-clinic-doctors {
-  padding: 15px 20px;
-  background-color: rgba(106, 13, 173, 0.05);
-}
-
-.ali-clinic-doctors h4 {
-  font-size: 14px;
-  margin-bottom: 10px;
-  color: var(--primary-dark);
-}
-
-.ali-doctors-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.ali-doctor-tag {
+.ali-status-badge.escalated {
   background-color: rgba(106, 13, 173, 0.1);
   color: var(--primary-color);
-  padding: 5px 10px;
-  border-radius: 4px;
-  font-size: 12px;
 }
 
-.ali-add-clinic {
-  margin-top: 20px;
+/* Role Badges */
+.ali-role-badge {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.ali-role-badge.patient {
+  background-color: rgba(33, 150, 243, 0.1);
+  color: var(--info-color);
+}
+
+.ali-role-badge.doctor {
+  background-color: rgba(106, 13, 173, 0.1);
+  color: var(--primary-color);
+}
+
+.ali-role-badge.nurse {
+  background-color: rgba(255, 152, 0, 0.1);
+  color: var(--warning-color);
+}
+
+.ali-role-badge.admin {
+  background-color: rgba(76, 175, 80, 0.1);
+  color: var(--success-color);
+}
+
+/* Category Badges */
+.ali-category-badge {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.ali-category-badge.nutrition {
+  background-color: rgba(76, 175, 80, 0.1);
+  color: var(--success-color);
+}
+
+.ali-category-badge.fitness {
+  background-color: rgba(33, 150, 243, 0.1);
+  color: var(--info-color);
+}
+
+.ali-category-badge.health {
+  background-color: rgba(106, 13, 173, 0.1);
+  color: var(--primary-color);
+}
+
+.ali-category-badge.pregnancy {
+  background-color: rgba(156, 39, 176, 0.1);
+  color: #9c27b0;
+}
+
+.ali-category-badge.postpartum {
+  background-color: rgba(255, 152, 0, 0.1);
+  color: var(--warning-color);
+}
+
+/* User Info */
+.ali-user-info {
+  display: flex;
+  align-items: center;
+}
+
+.ali-user-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background-color: var(--bg-light);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 10px;
+  font-weight: 600;
+  color: var(--primary-color);
+}
+
+.ali-user-details {
+  display: flex;
+  flex-direction: column;
+}
+
+.ali-user-name {
+  font-weight: 500;
+}
+
+.ali-user-phone {
+  font-size: 12px;
+  color: var(--text-lighter);
+}
+
+/* Patient Info */
+.ali-patient-info {
+  display: flex;
+  align-items: center;
+}
+
+.ali-patient-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background-color: var(--bg-light);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 10px;
+  font-weight: 600;
+  color: var(--primary-color);
+}
+
+.ali-patient-details {
+  display: flex;
+  flex-direction: column;
+}
+
+.ali-patient-name {
+  font-weight: 500;
+}
+
+.ali-patient-id {
+  font-size: 12px;
+  color: var(--text-lighter);
+}
+
+/* Appointment Time */
+.ali-appointment-time {
+  display: flex;
+  flex-direction: column;
+}
+
+.ali-appointment-date {
+  font-weight: 500;
+}
+
+.ali-appointment-hour {
+  font-size: 12px;
+  color: var(--text-lighter);
+}
+
+/* Action Buttons */
+.ali-action-buttons {
+  display: flex;
+  gap: 5px;
+}
+
+/* Add User Form */
+.ali-add-user-form,
+.ali-add-appointment-form,
+.ali-add-post-form,
+.ali-add-faq-form,
+.ali-add-resource-form,
+.ali-send-reminder-form {
+  background-color: var(--bg-light);
+  border-radius: 6px;
+  padding: 20px;
+  margin-bottom: 20px;
+}
+
+.ali-add-user-form h3,
+.ali-add-appointment-form h3,
+.ali-add-post-form h3,
+.ali-add-faq-form h3,
+.ali-add-resource-form h3,
+.ali-send-reminder-form h3 {
+  margin-bottom: 20px;
+  color: var(--text-color);
+  font-size: 18px;
 }
 
 /* FAQ List */
 .ali-faq-list {
-  background-color: var(--card-bg);
-  border-radius: 8px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
 }
 
 .ali-faq-item {
+  background-color: var(--bg-color);
+  border-radius: 6px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
   padding: 20px;
-  border-bottom: 1px solid var(--border-color);
-}
-
-.ali-faq-item:last-child {
-  border-bottom: none;
 }
 
 .ali-faq-question h4 {
-  font-size: 16px;
   margin-bottom: 10px;
+  color: var(--text-color);
 }
 
 .ali-faq-meta {
   display: flex;
-  align-items: center;
-  margin-bottom: 10px;
+  gap: 10px;
+  margin-bottom: 15px;
 }
 
 .ali-category-tag {
+  display: inline-block;
   padding: 3px 8px;
-  border-radius: 4px;
+  border-radius: 20px;
   font-size: 11px;
   font-weight: 500;
-  margin-right: 10px;
 }
 
 .ali-category-tag.prenatal-care {
-  background-color: rgba(156, 39, 176, 0.1);
-  color: var(--primary-light);
+  background-color: rgba(106, 13, 173, 0.1);
+  color: var(--primary-color);
 }
 
 .ali-category-tag.pregnancy-health {
-  background-color: rgba(33, 150, 243, 0.1);
-  color: var(--info-color);
+  background-color: rgba(255, 152, 0, 0.1);
+  color: var(--warning-color);
 }
 
 .ali-category-tag.nutrition {
@@ -10764,13 +10720,14 @@ tr:hover td {
 }
 
 .ali-category-tag.lifestyle {
-  background-color: rgba(255, 152, 0, 0.1);
-  color: var(--warning-color);
+  background-color: rgba(33, 150, 243, 0.1);
+  color: var(--info-color);
 }
 
 .ali-status-tag {
+  display: inline-block;
   padding: 3px 8px;
-  border-radius: 4px;
+  border-radius: 20px;
   font-size: 11px;
   font-weight: 500;
 }
@@ -10786,7 +10743,6 @@ tr:hover td {
 }
 
 .ali-faq-answer p {
-  font-size: 14px;
   color: var(--text-light);
   margin-bottom: 15px;
 }
@@ -10794,96 +10750,101 @@ tr:hover td {
 .ali-faq-actions {
   display: flex;
   justify-content: flex-end;
-}
-
-.ali-faq-actions button {
-  margin-left: 10px;
+  gap: 10px;
 }
 
 /* Resource Grid */
 .ali-resource-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
   gap: 20px;
-  margin-bottom: 30px;
 }
 
 .ali-resource-card {
-  background-color: var(--card-bg);
-  border-radius: 8px;
+  background-color: var(--bg-color);
+  border-radius: 6px;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
   padding: 20px;
+  transition: all 0.3s;
+}
+
+.ali-resource-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
 }
 
 .ali-resource-header {
   display: flex;
-  align-items: flex-start;
   justify-content: space-between;
+  align-items: center;
   margin-bottom: 15px;
 }
 
 .ali-resource-header h3 {
   font-size: 16px;
-  flex: 1;
+  color: var(--text-color);
 }
 
 .ali-resource-meta {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
+  gap: 10px;
   margin-bottom: 15px;
+  font-size: 12px;
 }
 
 .ali-last-updated {
-  font-size: 11px;
+  color: var(--text-lighter);
+}
+
+.ali-resource-preview {
   color: var(--text-light);
+  font-size: 14px;
+  margin-bottom: 15px;
 }
 
 .ali-resource-actions {
   display: flex;
   justify-content: flex-end;
-}
-
-.ali-resource-actions button {
-  margin-left: 10px;
+  gap: 10px;
 }
 
 /* Emergency Logs */
 .ali-emergency-logs {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
   gap: 20px;
-  margin-bottom: 30px;
 }
 
 .ali-emergency-card {
-  background-color: var(--card-bg);
-  border-radius: 8px;
+  background-color: var(--bg-color);
+  border-radius: 6px;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
   padding: 20px;
-}
-
-.ali-emergency-card.resolved {
-  border-left: 4px solid var(--success-color);
-}
-
-.ali-emergency-card.pending {
   border-left: 4px solid var(--warning-color);
 }
 
+.ali-emergency-card.pending {
+  border-left-color: var(--warning-color);
+}
+
+.ali-emergency-card.resolved {
+  border-left-color: var(--success-color);
+}
+
 .ali-emergency-card.escalated {
-  border-left: 4px solid var(--danger-color);
+  border-left-color: var(--danger-color);
 }
 
 .ali-emergency-header {
   display: flex;
-  align-items: flex-start;
   justify-content: space-between;
+  align-items: center;
   margin-bottom: 15px;
 }
 
 .ali-emergency-header h3 {
   font-size: 16px;
+  color: var(--text-color);
 }
 
 .ali-emergency-meta {
@@ -10893,50 +10854,291 @@ tr:hover td {
 }
 
 .ali-emergency-date {
-  font-size: 11px;
-  color: var(--text-light);
+  font-size: 12px;
+  color: var(--text-lighter);
   margin-bottom: 5px;
+}
+
+.ali-status-select select {
+  padding: 4px 8px;
+  border-radius: 4px;
+  border: 1px solid var(--border-color);
+  font-size: 12px;
+  background-color: var(--bg-light);
 }
 
 .ali-emergency-type {
   display: flex;
   align-items: center;
-  margin-bottom: 15px;
+  margin-bottom: 10px;
+  color: var(--warning-color);
 }
 
 .ali-emergency-type i {
-  margin-right: 10px;
-  color: var(--danger-color);
+  margin-right: 8px;
 }
 
-.ali-emergency-notes p {
-  font-size: 14px;
+.ali-emergency-notes {
   color: var(--text-light);
+  font-size: 14px;
   margin-bottom: 15px;
 }
 
 .ali-emergency-actions {
   display: flex;
   justify-content: flex-end;
+  gap: 10px;
 }
 
-.ali-emergency-actions button {
-  margin-left: 10px;
+/* Settings */
+.ali-settings-container {
+  max-width: 800px;
+  margin: 0 auto;
 }
 
-/* Message Content */
-.ali-message-content {
-  max-width: 300px;
+.ali-settings-section {
+  margin-bottom: 30px;
 }
 
-.ali-message-preview {
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+.ali-settings-section h3 {
+  font-size: 18px;
+  color: var(--text-color);
+  margin-bottom: 20px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border-color);
 }
 
-/* Responsive Adjustments */
+.ali-settings-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 30px;
+}
+
+/* Analytics */
+.ali-analytics-tools {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.ali-filter-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.ali-filter-group label {
+  font-size: 14px;
+  color: var(--text-light);
+}
+
+.ali-filter-group select {
+  padding: 8px 12px;
+  border-radius: 4px;
+  border: 1px solid var(--border-color);
+  background-color: var(--bg-color);
+  font-size: 14px;
+}
+
+.ali-analytics-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 20px;
+}
+
+.ali-analytics-card {
+  background-color: var(--bg-color);
+  border-radius: 6px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  padding: 20px;
+}
+
+.ali-analytics-card h3 {
+  margin-bottom: 15px;
+  color: var(--text-color);
+  font-size: 16px;
+}
+
+.ali-analytics-card.ali-wide {
+  grid-column: span 2;
+}
+
+.ali-chart-container {
+  height: 300px;
+  margin-top: 20px;
+}
+
+.ali-chart {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.ali-chart-legend {
+  display: flex;
+  gap: 20px;
+  margin-bottom: 20px;
+}
+
+.ali-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  color: var(--text-light);
+}
+
+.ali-legend-color {
+  width: 12px;
+  height: 12px;
+  border-radius: 2px;
+}
+
+.ali-legend-color.ali-patient {
+  background-color: var(--primary-color);
+}
+
+.ali-legend-color.ali-appointment {
+  background-color: var(--info-color);
+}
+
+.ali-chart-bars {
+  flex: 1;
+  display: flex;
+  gap: 20px;
+  align-items: flex-end;
+}
+
+.ali-chart-bar-group {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.ali-chart-label {
+  font-size: 12px;
+  color: var(--text-light);
+  margin-bottom: 10px;
+}
+
+.ali-chart-bars-container {
+  display: flex;
+  gap: 5px;
+  width: 100%;
+  height: 100%;
+  align-items: flex-end;
+}
+
+.ali-chart-bar {
+  width: 50%;
+  border-radius: 4px 4px 0 0;
+  transition: height 0.3s ease;
+}
+
+.ali-chart-bar.ali-patient {
+  background-color: var(--primary-color);
+}
+
+.ali-chart-bar.ali-appointment {
+  background-color: var(--info-color);
+}
+
+.ali-pie-chart {
+  width: 200px;
+  height: 200px;
+  border-radius: 50%;
+  position: relative;
+  margin: 0 auto;
+  background: conic-gradient(
+    #4e73df 0% 40%,
+    #1cc88a 40% 65%,
+    #36b9cc 65% 80%,
+    #f6c23e 80% 100%
+  );
+}
+
+.ali-pie-center {
+  position: absolute;
+  width: 60%;
+  height: 60%;
+  background-color: var(--bg-color);
+  border-radius: 50%;
+  top: 20%;
+  left: 20%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ali-pie-total {
+  font-size: 24px;
+  font-weight: 600;
+  color: var(--text-color);
+}
+
+.ali-pie-legend {
+  margin-top: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.ali-metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 15px;
+}
+
+.ali-metric-item {
+  background-color: var(--bg-light);
+  border-radius: 6px;
+  padding: 15px;
+  text-align: center;
+}
+
+.ali-metric-value {
+  font-size: 24px;
+  font-weight: 600;
+  color: var(--primary-color);
+  margin-bottom: 5px;
+}
+
+.ali-metric-label {
+  font-size: 12px;
+  color: var(--text-light);
+}
+
+.ali-content-stats table {
+  width: 100%;
+}
+
+.ali-content-stats th,
+.ali-content-stats td {
+  padding: 12px 15px;
+  text-align: left;
+}
+
+.ali-content-stats th {
+  background-color: var(--bg-light);
+  color: var(--text-light);
+  font-weight: 500;
+  font-size: 13px;
+}
+
+.ali-content-stats td {
+  border-bottom: 1px solid var(--border-color);
+  font-size: 14px;
+}
+
+/* Responsive */
 @media (max-width: 1200px) {
+  .ali-analytics-grid {
+    grid-template-columns: 1fr;
+  }
+  
   .ali-analytics-card.ali-wide {
     grid-column: span 1;
   }
@@ -10944,30 +11146,33 @@ tr:hover td {
 
 @media (max-width: 992px) {
   .ali-sidebar {
-    position: fixed;
-    top: 0;
-    left: 0;
-    bottom: 0;
-    z-index: 1000;
-    transform: translateX(-100%);
-  }
-  
-  .ali-sidebar.ali-collapsed {
-    transform: translateX(0);
     width: 70px;
   }
   
+  .ali-sidebar-header h3,
+  .ali-sidebar h4,
+  .ali-sidebar-menu span,
+  .ali-badge,
+  .ali-user-name,
+  .ali-user-role {
+    display: none;
+  }
+  
+  .ali-sidebar-menu li > div {
+    justify-content: center;
+  }
+  
+  .ali-sidebar-menu i {
+    margin-right: 0;
+    font-size: 18px;
+  }
+  
   .ali-main-content {
-    margin-left: 0;
+    margin-left: 70px;
   }
   
-  .ali-top-nav {
-    padding-left: 20px;
-    padding-right: 20px;
-  }
-  
-  .ali-content-wrapper {
-    padding: 20px;
+  .ali-search-bar {
+    width: 250px;
   }
 }
 
@@ -10980,18 +11185,25 @@ tr:hover td {
     grid-template-columns: 1fr 1fr;
   }
   
-  .ali-metrics-grid {
-    grid-template-columns: 1fr 1fr;
+  .ali-form-row {
+    flex-direction: column;
+    gap: 0;
+  }
+  
+  .ali-top-nav {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 15px;
   }
   
   .ali-search-bar {
-    width: 200px;
+    width: 100%;
+    margin-bottom: 15px;
   }
   
-  table {
-    display: block;
-    overflow-x: auto;
-    white-space: nowrap;
+  .ali-user-actions {
+    width: 100%;
+    justify-content: space-between;
   }
 }
 
@@ -11004,21 +11216,11 @@ tr:hover td {
     grid-template-columns: 1fr;
   }
   
-  .ali-metrics-grid {
+  .ali-resource-grid {
     grid-template-columns: 1fr;
   }
   
-  .ali-search-bar {
-    display: none;
-  }
-  
-  .ali-page-header {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-  
-  .ali-page-header .ali-btn {
-    margin-top: 15px;
-    align-self: flex-end;
+  .ali-emergency-logs {
+    grid-template-columns: 1fr;
   }
 }
