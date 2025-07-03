@@ -12,7 +12,7 @@ const VideoCall = () => {
   const [isScreenSharing, setIsScreenSharing] = useState(false);
   const [callDuration, setCallDuration] = useState(0);
   const [aiMessages, setAiMessages] = useState([
-    { sender: 'AI Assistant', text: 'Hello! I will connect you to a doctor shortly.', time: '10:00 AM', isReceived: true }
+    { sender: 'AI Assistant', text: 'Hello! I will connect you to a doctor shortly.', time: getCurrentTime(), isReceived: true }
   ]);
   const [newMessage, setNewMessage] = useState('');
   const [doctorStatus, setDoctorStatus] = useState('connecting');
@@ -25,9 +25,10 @@ const VideoCall = () => {
   const localStreamRef = useRef(null);
   const chatMessagesEndRef = useRef(null);
 
-  // Twilio credentials (replace with your actual credentials)
-  const TWILIO_TOKEN_URL = 'https://your-server.com/generate-twilio-token'; // Your backend endpoint
-  const DOCTOR_NUMBER = '+2348160949697';
+  // Helper function to get current time in HH:MM AM/PM format
+  function getCurrentTime() {
+    return new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+  }
 
   // Initialize call
   useEffect(() => {
@@ -52,12 +53,7 @@ const VideoCall = () => {
       // First show connecting status
       setCallStatus('connected');
       setDoctorStatus('searching');
-      addAiMessage("Connecting you to the doctor at " + DOCTOR_NUMBER + "...");
-
-      // In a real app, you would:
-      // 1. Call your backend to initiate a call to the doctor's number
-      // 2. Get a Twilio access token
-      // 3. Connect to a video room
+      addAiMessage("Connecting you to a doctor...");
 
       // Simulate the call process
       setTimeout(() => {
@@ -82,19 +78,14 @@ const VideoCall = () => {
       setDoctorStatus('connecting');
       addAiMessage("Doctor answered! Establishing video connection...");
 
-      // In a real implementation, you would:
-      // 1. Fetch a Twilio token from your server
-      // const response = await fetch(TWILIO_TOKEN_URL);
-      // const { token } = await response.json();
-
-      // For demo purposes, we'll simulate the connection
+      // For demo purposes, simulate the connection
       setTimeout(() => {
         setDoctorStatus('connected');
         addAiMessage("Video connection established with the doctor.");
+        addAiMessage("How can I assist you during your consultation today?");
 
         // Simulate receiving remote video stream
         if (remoteVideoRef.current) {
-          // In a real app, this would be the doctor's video stream
           navigator.mediaDevices.getUserMedia({ video: true, audio: true })
             .then(stream => {
               remoteVideoRef.current.srcObject = stream;
@@ -110,12 +101,13 @@ const VideoCall = () => {
   };
 
   const addAiMessage = (text) => {
-    setAiMessages(prev => [...prev, {
+    const newMsg = {
       sender: 'AI Assistant',
       text: text,
-      time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
+      time: getCurrentTime(),
       isReceived: true
-    }]);
+    };
+    setAiMessages(prev => [...prev, newMsg]);
   };
 
   const startCallTimer = () => {
@@ -190,33 +182,109 @@ const VideoCall = () => {
   const endCall = () => {
     stopCall();
     setCallStatus('ended');
-    setTimeout(() => {
-      navigate('/appointments');
-    }, 2000);
+    addAiMessage("The call has ended. You can continue chatting with me if you have any follow-up questions.");
+  };
+
+  const generateAIResponse = (userMessage) => {
+    const message = userMessage.toLowerCase();
+    
+    // Post-call responses
+    if (callStatus === 'ended') {
+      if (message.includes('prescription') || message.includes('medic') || message.includes('drug')) {
+        return "Your prescription details will be available in your appointment summary. Please check your email or the appointments section.";
+      }
+      
+      if (message.includes('follow') || message.includes('next')) {
+        return "You can schedule a follow-up appointment through the appointments section. Would you like me to help with that?";
+      }
+      
+      if (message.includes('summary') || message.includes('notes') || message.includes('details')) {
+        return "Your consultation summary will be available shortly in your appointments. It typically takes 5-10 minutes to generate.";
+      }
+      
+      const postCallResponses = [
+        "Is there anything else I can help you with regarding your consultation?",
+        "Would you like me to summarize the key points from your consultation?",
+        "You can review the call recording and notes in your appointments section.",
+        "Remember to check your email for the consultation summary.",
+        "Let me know if you need help with anything else before you go."
+      ];
+      return postCallResponses[Math.floor(Math.random() * postCallResponses.length)];
+    }
+    
+    // Medical-related responses
+    if (message.includes('symptom') || message.includes('feel') || message.includes('pain')) {
+      const responses = [
+        "I understand you're describing symptoms. The doctor will help diagnose this shortly.",
+        "Based on your symptoms, I recommend discussing this thoroughly with the doctor.",
+        "I've noted your symptoms. The doctor will provide professional advice."
+      ];
+      return responses[Math.floor(Math.random() * responses.length)];
+    }
+    
+    if (message.includes('prescription') || message.includes('medic') || message.includes('drug')) {
+      return "Only the doctor can prescribe medication. Please wait for their professional recommendation.";
+    }
+    
+    if (message.includes('emergency') || message.includes('urgent')) {
+      return "If this is a medical emergency, please call emergency services immediately.";
+    }
+    
+    // Call-related responses
+    if (message.includes('connect') || message.includes('doctor') || message.includes('wait')) {
+      return "The doctor is currently reviewing your case. They'll respond shortly.";
+    }
+    
+    if (message.includes('video') || message.includes('audio') || message.includes('hear') || message.includes('see')) {
+      return "I've checked the connection and everything looks good on our end. Let me know if issues persist.";
+    }
+    
+    // General conversation
+    if (message.includes('thank') || message.includes('appreciate')) {
+      return "You're welcome! I'm here to assist with your healthcare needs.";
+    }
+    
+    if (message.includes('hi') || message.includes('hello') || message.includes('hey')) {
+      return "Hello! How can I assist you with your consultation today?";
+    }
+    
+    if (message.includes('how are you')) {
+      return "I'm an AI assistant, so I don't have feelings, but I'm fully operational and ready to help you!";
+    }
+    
+    // Default responses
+    const defaultResponses = [
+      "I've shared your message with the doctor. They'll respond shortly.",
+      "That's an important point. The doctor will address this in the consultation.",
+      "I've noted your concern for the doctor's attention.",
+      "Please hold while the doctor reviews your information.",
+      "The doctor is currently reviewing your medical information.",
+      "I'll make sure the doctor is aware of this point.",
+      "Your health is important. The doctor will provide guidance on this."
+    ];
+    
+    return defaultResponses[Math.floor(Math.random() * defaultResponses.length)];
   };
 
   const sendMessage = () => {
     if (!newMessage.trim()) return;
     
-    setAiMessages(prev => [...prev, {
+    // Add user message
+    const userMessage = {
       sender: 'You',
       text: newMessage,
-      time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
+      time: getCurrentTime(),
       isReceived: false
-    }]);
+    };
+    
+    setAiMessages(prev => [...prev, userMessage]);
     setNewMessage('');
     
-    // Simulate AI response
+    // Generate and send AI response after a short delay
     setTimeout(() => {
-      const responses = [
-        "I've shared your message with the doctor.",
-        "The doctor will respond shortly.",
-        "Please wait for the doctor's response.",
-        "The doctor has noted your concern."
-      ];
-      const randomResponse = responses[Math.floor(Math.random() * responses.length)];
-      addAiMessage(randomResponse);
-    }, 1000 + Math.random() * 2000);
+      const aiResponse = generateAIResponse(newMessage);
+      addAiMessage(aiResponse);
+    }, 800 + Math.random() * 1200);
   };
 
   const handleKeyPress = (e) => {
@@ -233,23 +301,9 @@ const VideoCall = () => {
 
   return (
     <div className="video-call-page">
-      {callStatus === 'ended' ? (
-        <div className="call-ended-screen">
-          <div className="call-ended-content">
-            <i className="fas fa-phone-slash call-ended-icon"></i>
-            <h2>Call Ended</h2>
-            <p>Your consultation lasted {formatTime(callDuration)}</p>
-            <button 
-              onClick={() => navigate('/appointments')}
-              className="btn btn-primary"
-            >
-              Return to Appointments
-            </button>
-          </div>
-        </div>
-      ) : (
-        <>
-          <div className="video-call-container">
+      <div className="video-call-container">
+        {callStatus !== 'ended' ? (
+          <>
             <div className="video-call-header">
               <div className="call-info">
                 <h2>
@@ -268,7 +322,7 @@ const VideoCall = () => {
                 )}
                 {doctorStatus === 'searching' && (
                   <span className="status-searching">
-                    <i className="fas fa-phone"></i> Dialing {DOCTOR_NUMBER}...
+                    <i className="fas fa-phone"></i> Dialing doctor...
                   </span>
                 )}
                 {doctorStatus === 'ringing' && (
@@ -296,7 +350,7 @@ const VideoCall = () => {
                     {doctorStatus === 'searching' ? (
                       <>
                         <i className="fas fa-phone"></i>
-                        <p>Dialing {DOCTOR_NUMBER}...</p>
+                        <p>Dialing doctor...</p>
                       </>
                     ) : doctorStatus === 'ringing' ? (
                       <>
@@ -320,7 +374,7 @@ const VideoCall = () => {
                     />
                     <div className="remote-video-info">
                       <span className="participant-name">Doctor</span>
-                      <span className="participant-role">+234 816 094 9697</span>
+                      <span className="participant-role">General Practitioner</span>
                     </div>
                   </>
                 )}
@@ -375,38 +429,52 @@ const VideoCall = () => {
                 <i className="fas fa-phone-slash"></i>
               </button>
             </div>
-          </div>
-
-          <div className="call-sidebar">
-            <div className="sidebar-section">
-              <h3>AI Assistance</h3>
-              <div className="chat-container">
-                <div className="chat-messages" ref={chatMessagesEndRef}>
-                  {aiMessages.map((message, index) => (
-                    <div key={index} className={`message ${message.isReceived ? 'received' : 'sent'}`}>
-                      <div className="message-sender">{message.sender}</div>
-                      <p>{message.text}</p>
-                      <span className="message-time">{message.time}</span>
-                    </div>
-                  ))}
-                </div>
-                <div className="chat-input">
-                  <input 
-                    type="text" 
-                    placeholder="Ask the AI assistant..." 
-                    value={newMessage}
-                    onChange={(e) => setNewMessage(e.target.value)}
-                    onKeyPress={handleKeyPress}
-                  />
-                  <button className="send-btn" onClick={sendMessage}>
-                    <i className="fas fa-paper-plane"></i>
-                  </button>
-                </div>
-              </div>
+          </>
+        ) : (
+          <div className="call-ended-banner">
+            <div className="call-ended-content">
+              <i className="fas fa-phone-slash"></i>
+              <span>Call Ended - Duration: {formatTime(callDuration)}</span>
+              <button 
+                onClick={() => navigate('/appointments')}
+                className="btn btn-primary"
+              >
+                Back to Appointments
+              </button>
             </div>
           </div>
-        </>
-      )}
+        )}
+      </div>
+
+      <div className="call-sidebar">
+        <div className="sidebar-section">
+          <h3>AI Assistance</h3>
+          <div className="chat-container">
+            <div className="chat-messages">
+              {aiMessages.map((message, index) => (
+                <div key={index} className={`message ${message.isReceived ? 'received' : 'sent'}`}>
+                  <div className="message-sender">{message.sender}</div>
+                  <p>{message.text}</p>
+                  <span className="message-time">{message.time}</span>
+                </div>
+              ))}
+              <div ref={chatMessagesEndRef} />
+            </div>
+            <div className="chat-input">
+              <input 
+                type="text" 
+                placeholder={callStatus === 'ended' ? "Ask follow-up questions..." : "Ask the AI assistant..."} 
+                value={newMessage}
+                onChange={(e) => setNewMessage(e.target.value)}
+                onKeyPress={handleKeyPress}
+              />
+              <button className="send-btn" onClick={sendMessage}>
+                <i className="fas fa-paper-plane"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };

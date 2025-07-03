@@ -837,13 +837,7 @@ const HealthHub = () => {
                       <i className={`fas ${isArticleSaved(selectedArticle.id) ? 'fa-check' : 'fa-bookmark'} mr-2`}></i>
                       {isArticleSaved(selectedArticle.id) ? 'Saved' : 'Save Article'}
                     </button>
-                    <button 
-                      className="btn btn-secondary"
-                      onClick={() => openShareDialog(selectedArticle)}
-                    >
-                      <i className="fas fa-share mr-2"></i>
-                      Share
-                    </button>
+                    
                   </div>
                 </div>
               </div>

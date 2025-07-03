@@ -234,20 +234,7 @@
           </div>
         </section>
 
-        {/* FAQ CTA */}
-        <section className="faq-cta">
-          <div className="faq-content">
-            <h2>Need Immediate Help?</h2>
-            <p>
-              Check our <Link to="/faq">Frequently Asked Questions</Link> for quick 
-              answers to common questions about pregnancy tracking, appointments, 
-              and account management.
-            </p>
-            <a href="/faq" className="btn btn-outline">
-              Visit FAQ Center
-            </a>
-          </div>
-        </section>
+      
       </div>
     );
   };

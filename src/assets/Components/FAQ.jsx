@@ -49,7 +49,7 @@ const FAQ = () => {
     general: [
       {
         id: 'gen1',
-        question: 'Is MamaCare available outside Nigeria?',
+        question: 'Is pregvita available outside Nigeria?',
         answer: 'Currently, MamaCare primarily serves users in Nigeria. However, our tracking features can be used anywhere, while provider connections are limited to our Nigerian network.'
       },
       {
@@ -59,8 +59,8 @@ const FAQ = () => {
       },
       {
         id: 'gen3',
-        question: 'Can I use MamaCare without internet?',
-        answer: 'Basic tracking features work offline, but you\'ll need internet to sync data, access provider features, or receive updates. We compress data to minimize usage.'
+        question: 'Can I use pregvita  without internet?',
+        answer: 'Basic tracking features work offline, but you\'ll need internet to  receive updates. We compress data to minimize usage.'
       }
     ],
     account: [
@@ -72,7 +72,7 @@ const FAQ = () => {
       {
         id: 'acc2',
         question: 'Can I change my due date later?',
-        answer: 'Yes! Go to Profile > Pregnancy Details. Note: Changing your due date will reset some tracking metrics.'
+        answer: 'No!  .'
       }
     ],
     tracking: [
@@ -83,15 +83,15 @@ const FAQ = () => {
       },
       {
         id: 'tr2',
-        question: 'Why does my week count seem off?',
-        answer: 'Pregnancy dating starts from your last menstrual period (LMP), not conception. If your cycle is irregular or you know your conception date, adjust in settings.'
+        question: 'how do i know if my calculator i already counting?',
+        answer: 'when it start counting ,u will see the line getting filled up little by little '
       }
     ],
     appointments: [
       {
         id: 'app1',
         question: 'How do virtual consultations work?',
-        answer: 'After booking, you\'ll receive a secure link. At appointment time, join via browser (no downloads needed). Consultations are encrypted and confidential.'
+        answer: 'After booking and you already see your  booking in the history ,then it is already booked and dilivered to us '
       },
       {
         id: 'app2',
@@ -115,7 +115,7 @@ const FAQ = () => {
       {
         id: 'prem1',
         question: 'What\'s included in the free trial?',
-        answer: '30 days of full Premium access. No payment needed upfront. Cancel anytime before trial ends to avoid charges.'
+        answer: 'it is all free ,no chages needed .'
       },
       {
         id: 'prem2',
@@ -156,7 +156,7 @@ const FAQ = () => {
           <h1>Frequently Asked Questions</h1>
           <p>
             Quick answers to common questions about MamaCare. Can't find what you need?{' '}
-            <Link to="/contactus">Contact our support team</Link>.
+          
           </p>
           <form className="search-box" onSubmit={handleSearch}>
             <input
@@ -268,12 +268,12 @@ const FAQ = () => {
                     <p>{item.answer}</p>
                     {item.id === 'gen2' && (
                       <Link to="/tracking-guide" className="learn-more">
-                        Learn more about tracking accuracy <i className="fas fa-arrow-right"></i>
+                       
                       </Link>
                     )}
                     {item.id === 'safe1' && (
                       <Link to="/privacy" className="learn-more">
-                        Read our full Privacy Policy <i className="fas fa-arrow-right"></i>
+                  
                       </Link>
                     )}
                   </div>

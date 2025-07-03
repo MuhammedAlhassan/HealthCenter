@@ -1,6 +1,7 @@
-import React from 'react';
-import SplashScreen from './assets/Components/SplashScreen';
+import React, { useState } from 'react';
 import { BrowserRouter, Route, Routes } from 'react-router-dom';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import SplashScreen from './assets/Components/SplashScreen';
 import Dashboard from './assets/Pages/Dashboard';
 import Login from './assets/Pages/Login';
 import Navbar from './assets/Components/Navbar';
@@ -38,101 +39,82 @@ import ClinicLocator from './assets/Components/ClinicLocator';
 import Kick from './assets/Components/Kick';
 import MedicalReport from './assets/Components/MedicalReport';
 import Weight from './assets/Components/Weight';
+import FlyerCard from './assets/Components/FlyerCard';
 import Accessibility from './assets/Components/Accessibility';
-
-
-
-
 
 import "./App.css";
 
+// Create a QueryClient instance
+const queryClient = new QueryClient();
 
+const AppWrapper = () => {
+  const [showSplash, setShowSplash] = useState(true);
 
+  const handleSplashComplete = () => {
+    setShowSplash(false);
+  };
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-const App = () => {
   return (
+    <QueryClientProvider client={queryClient}>
+      {showSplash ? (
+        <SplashScreen onComplete={handleSplashComplete} />
+      ) : (
+        <MainApp />
+      )}
+    </QueryClientProvider>
+  );
+};
 
+const MainApp = () => {
+  return (
     <BrowserRouter>
       <Routes>
-         <Route path='/SplashScreen' element={<SplashScreen />} />
+        <Route path='/SplashScreen' element={<SplashScreen />} />
       </Routes>
       <Navbar />
       <Routes>
-
-
-
-
-
+        <Route path='FlyerCard' element={<FlyerCard />} />
         <Route path='/' element={<Home />} />
-        <Route path='map' element={<Map />} /> 
-            <Route path='Accessibility' element={<Accessibility />} /> 
-            <Route path='Voice' element={<Voice />} /> 
+        <Route path='map' element={<Map />} />
+        <Route path='Accessibility' element={<Accessibility />} />
+        <Route path='Voice' element={<Voice />} />
         <Route path='Cookies' element={<Cookies />} />
         <Route path='SOSButton' element={<SOSButton />} />
         <Route path='Dashboard' element={<Dashboard />} />
         <Route path='Navbar' element={<Navbar />} />
         <Route path='Card' element={<Card />} />
-               <Route path='MedicalReport' element={<MedicalReport />} />
-            <Route path='Weight' element={<Weight />} />
-            <Route path='Profile' element={<Profile />} />
-                <Route path='ClinicLocator' element={<ClinicLocator />} />
-            <Route path='HelpCenter' element={<HelpCenter />} />
-         <Route path='/login' element={<Login />} />
-            <Route path='/VideoCall' element={<VideoCall />} />
-                <Route path='/UserDashboards' element={<UserDashboards />} />
+        <Route path='MedicalReport' element={<MedicalReport />} />
+        <Route path='Weight' element={<Weight />} />
+        <Route path='Profile' element={<Profile />} />
+        <Route path='ClinicLocator' element={<ClinicLocator />} />
+        <Route path='HelpCenter' element={<HelpCenter />} />
+        <Route path='/login' element={<Login />} />
+        <Route path='/VideoCall' element={<VideoCall />} />
+        <Route path='/UserDashboards' element={<UserDashboards />} />
         <Route path='Register' element={<Register />} />
-              <Route path='AuthModal' element={<AuthModal />} />
+        <Route path='AuthModal' element={<AuthModal />} />
         <Route path='TermsAndConditions' element={<TermsAndConditions />} />
         <Route path='AboutUs' element={<AboutUs />} />
-         <Route path='SMS' element={<SMS />} />
+        <Route path='SMS' element={<SMS />} />
         <Route path='Emergency' element={<Emergency />} />
-         <Route path='FeaturesSection' element={<FeaturesSection />} />
-         <Route path='HeroSection' element={<HeroSection />} />
+        <Route path='FeaturesSection' element={<FeaturesSection />} />
+        <Route path='HeroSection' element={<HeroSection />} />
         <Route path='Services' element={<Services />} />
         <Route path='OurPartners' element={<OurPartners />} />
         <Route path='PrivacyPolicy' element={<PrivacyPolicy />} />
         <Route path='SignUpModal' element={<SignUpModal />} />
         <Route path='ContactUs' element={<ContactUs />} />
         <Route path='FAQ' element={<FAQ />} />
-         <Route path='Kick' element={<Kick />} />
-                <Route path='Admin' element={<Admin />} />
+        <Route path='Kick' element={<Kick />} />
+        <Route path='Admin' element={<Admin />} />
         <Route path='Career' element={<Career />} />
         <Route path='Blog' element={<Blog />} />
-              <Route path='HealthHub' element={<HealthHub />} />
+        <Route path='HealthHub' element={<HealthHub />} />
         <Route path='Appointments' element={<Appointments />} />
-
-
-
-
-
-
-
-
       </Routes>
       <Footer />
     </BrowserRouter>
-
   );
 };
 
-export default App;
+export default AppWrapper;

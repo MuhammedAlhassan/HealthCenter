@@ -429,24 +429,7 @@ const Blog = () => {
                 </ul>
               </div>
 
-              <div className="sidebar-widget">
-                <h3>Popular Tags</h3>
-                <div className="tags-cloud">
-                  {['Antenatal Visits', 'Warning Signs', 'Hospital Bag', 'Traditional Foods', 'Delivery Costs', 'Omugwo'].map((tag, index) => (
-                    <button 
-                      key={index} 
-                      className="tag"
-                      onClick={() => {
-                        setSearchTerm(tag);
-                        setCurrentPage(1);
-                      }}
-                    >
-                      {tag}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
+              
               <div className="sidebar-widget newsletter">
                 <h3>Get SMS Health Tips</h3>
                 <p>

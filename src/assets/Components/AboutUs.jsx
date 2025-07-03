@@ -72,9 +72,7 @@ const AboutUs = () => {
             pregnancy support through SMS reminders, emergency SOS, and low-bandwidth 
             health information.
           </p>
-          <button onClick={handleJoinClick} className="btn btn-primary">
-            Register for Free <i className="fas fa-arrow-right ml-2"></i>
-          </button>
+         
         </div>
         <div className="hero-image">
           <img 
@@ -174,7 +172,7 @@ const AboutUs = () => {
           <h2>Take Charge of Your Maternal Health Today</h2>
           <div className="cta-buttons">
           
-            <a href="http://localhost:5173/ContactUs"> 
+            <a href="http://localhost:5173/Cliniclocator"> 
               <button className="btn btn-outline">
                 Find Nearby Clinics
               </button>

@@ -159,7 +159,7 @@ const Appointments = () => {
             onClick={() => setActiveTab('past')}
             className={`tab-button ${activeTab === 'past' ? 'active' : ''}`}
           >
-            Past ({appointments.past.length})
+            Emergency ({appointments.past.length})
           </button>
         </div>
 

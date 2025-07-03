@@ -5,7 +5,6 @@ import './Profile';
 
 const Profile = () => {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState('personal');
   const [isEditing, setIsEditing] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [profileData, setProfileData] = useState({
@@ -13,7 +12,7 @@ const Profile = () => {
     lastName: '',
     email: '',
     phone: '',
-    dateOfBirth: '',
+    DueDate: '',  // This will come from signup and be unchangeable
     address: ''
   });
 
@@ -29,9 +28,16 @@ const Profile = () => {
   }, []);
 
   const handleSave = () => {
-    localStorage.setItem('userData', JSON.stringify(profileData));
+    // Don't allow changing DueDate through editing
+    const savedDueDate = JSON.parse(localStorage.getItem('userData'))?.DueDate;
+    const dataToSave = {
+      ...profileData,
+      DueDate: savedDueDate || profileData.DueDate  // Preserve original DueDate
+    };
+    
+    localStorage.setItem('userData', JSON.stringify(dataToSave));
     setIsEditing(false);
-    console.log('Profile data saved:', profileData);
+    console.log('Profile data saved:', dataToSave);
   };
 
   const handleCancel = () => {
@@ -53,6 +59,9 @@ const Profile = () => {
   };
 
   const updateProfileData = (field, value) => {
+    // Prevent updating DueDate if it's being edited
+    if (field === 'DueDate' && !isEditing) return;
+    
     setProfileData(prev => ({
       ...prev,
       [field]: value
@@ -145,13 +154,12 @@ const Profile = () => {
                   />
                 </div>
                 <div className="form-group">
-                  <label className="label">Date of Birth</label>
+                  <label className="label">Due Date</label>
                   <input
                     type="date"
-                    className={`input ${!isEditing ? 'readonly' : ''}`}
-                    value={profileData.dateOfBirth}
-                    onChange={(e) => updateProfileData('dateOfBirth', e.target.value)}
-                    readOnly={!isEditing}
+                    className="input readonly"
+                    value={profileData.DueDate}
+                    readOnly={true}
                   />
                 </div>
                 <div className="form-group full-width">

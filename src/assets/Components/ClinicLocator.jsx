@@ -388,7 +388,7 @@ const ClinicLocator = () => {
                     className="btn btn-primary"
                   >
                     <i className="fas fa-phone mr-2"></i>
-                    Call
+                    message 
                   </button>
                   <button 
                     onClick={() => handleDirections(clinic)}
@@ -485,7 +485,7 @@ const ClinicLocator = () => {
                     className="btn btn-primary"
                   >
                     <i className="fas fa-phone mr-2"></i>
-                    Call Now
+                    message
                   </button>
                   <button 
                     onClick={() => handleDirections(selectedClinic)}

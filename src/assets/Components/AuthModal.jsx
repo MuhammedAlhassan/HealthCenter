@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { FaTimes, FaHeart, FaSpinner } from 'react-icons/fa';
-import api from '../../api/apiClient';
 import './AuthModal';
 
 const AuthModal = ({ isOpen, onClose, mode, onToggleMode, onAuthSuccess }) => {
@@ -16,6 +15,20 @@ const AuthModal = ({ isOpen, onClose, mode, onToggleMode, onAuthSuccess }) => {
   });
 
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  // Get users from localStorage
+  const getUsers = () => {
+    const users = localStorage.getItem('users');
+    return users ? JSON.parse(users) : [];
+  };
+
+  // Save user to localStorage
+  const saveUser = (user) => {
+    const users = getUsers();
+    users.push(user);
+    localStorage.setItem('users', JSON.stringify(users));
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -28,30 +41,58 @@ const AuthModal = ({ isOpen, onClose, mode, onToggleMode, onAuthSuccess }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
+    setError('');
     
     try {
-      const userData = {
-        firstName: formData.firstName,
-        lastName: formData.lastName,
-        email: formData.email,
-        phone: formData.phone,
-        userType: formData.userType,
-        dueDate: formData.dueDate,
-        address: formData.address,
-        password: formData.password
-      };
-      
-          if (mode === 'register') {
-          await api.auth.register(userData);
-        } else {
-          await api.auth.login(userData);
+      if (mode === 'register') {
+        // Check if user already exists
+        const users = getUsers();
+        const userExists = users.some(
+          user => user.email === formData.email || user.phone === formData.phone
+        );
+
+        if (userExists) {
+          throw new Error('User already exists with this email or phone');
         }
+
+        // Register new user
+        const userData = {
+          id: Date.now().toString(),
+          firstName: formData.firstName,
+          lastName: formData.lastName,
+          email: formData.email,
+          phone: formData.phone,
+          userType: formData.userType,
+          ...(formData.userType === 'expectant-mother' && {
+            dueDate: formData.dueDate,
+            address: formData.address
+          }),
+          password: formData.password,
+          createdAt: new Date().toISOString()
+        };
+        
+        saveUser(userData);
+        onAuthSuccess(userData);
+      } else {
+        // Login existing user
+        const users = getUsers();
+        const user = users.find(
+          user => (user.email === formData.email || user.phone === formData.email) && 
+                  user.password === formData.password
+        );
+
+        if (!user) {
+          throw new Error('Invalid credentials. Please try again.');
+        }
+
+        onAuthSuccess(user);
+      }
       
-      onAuthSuccess(userData);
       onClose();
       resetForm();
     } catch (error) {
       console.error('Authentication error:', error);
+      setError(error.message || 'Authentication failed. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -90,6 +131,8 @@ const AuthModal = ({ isOpen, onClose, mode, onToggleMode, onAuthSuccess }) => {
               : 'Create your account for better maternal health'}
           </p>
         </div>
+
+        {error && <div className="error-message">{error}</div>}
 
         <form onSubmit={handleSubmit} className="auth-form">
           {mode === 'register' && (
@@ -191,12 +234,12 @@ const AuthModal = ({ isOpen, onClose, mode, onToggleMode, onAuthSuccess }) => {
 
           {mode === 'login' && (
             <div className="form-group">
-              <label className="label">Phone Number or Email</label>
+              <label className="label">Email or Phone</label>
               <input
                 className="input"
                 type="text"
                 name="email"
-                placeholder="Enter your phone or email"
+                placeholder="Enter your email or phone"
                 value={formData.email}
                 onChange={handleChange}
                 required
@@ -236,7 +279,10 @@ const AuthModal = ({ isOpen, onClose, mode, onToggleMode, onAuthSuccess }) => {
             {mode === 'login' ? "Don't have an account? " : "Already have an account? "}
             <button 
               type="button"
-              onClick={() => onToggleMode(mode === 'login' ? 'register' : 'login')} 
+              onClick={() => {
+                resetForm();
+                onToggleMode(mode === 'login' ? 'register' : 'login');
+              }} 
               className="auth-toggle-btn"
             >
               {mode === 'login' ? 'Sign up' : 'Sign in'}

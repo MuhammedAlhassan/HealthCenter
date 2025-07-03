@@ -17,14 +17,15 @@ const Footer = () => {
               Empowering every mother's journey with comprehensive health support, emergency response, and expert guidance accessible even with low bandwidth connectivity.
             </p>
             <div className="footer-social">
-              <a href="#" className="social-link">
-                <i className="fab fa-facebook-f"></i>
-              </a>
-              <a href="#" className="social-link">
+            
+              <a href="https://x.com/Al20681Muhammed?t=Z107EJ7Z069OgkHMDahc3A&s=09" className="social-link">
                 <i className="fab fa-twitter"></i>
               </a>
-              <a href="#" className="social-link">
+              <a href="https://www.instagram.com/pfp_paapaa?igsh=MWlpbzB0cWl0amMzOA==" className="social-link">
                 <i className="fab fa-instagram"></i>
+              </a>
+                <a href="" className="social-link">
+                <i className="fab fa-facebook-f"></i>
               </a>
             </div>
           </div>
@@ -59,7 +60,7 @@ const Footer = () => {
           <div className="emergency-alert">
             <p className="emergency-text">
               <i className="fas fa-phone"></i>
-              24/7 Emergency Hotline: +234-800-MATERNAL
+              24/7 Emergency Hotline: +234-816-776-9208
             </p>
             <p className="emergency-disclaimer">
               For immediate medical emergencies, call your local emergency services first
@@ -68,7 +69,7 @@ const Footer = () => {
         </div>
         
         <div className="footer-bottom">
-          <p>&copy; 2024 MaternalCare. All rights reserved. Made with ❤️ for Nigerian mothers.</p>
+          <p>&copy; 2024 pregvita health Care. All rights reserved. Made with ❤️ for Nigerian mothers.</p>
         </div>
         <div id="wet"><h1>created by </h1></div>
       </div>

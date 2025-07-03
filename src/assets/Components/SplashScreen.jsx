@@ -1,19 +1,42 @@
 import React, { useEffect, useState } from 'react';
-import '@fortawesome/fontawesome-free/css/all.min.css'; // Ensure icons load
-import './SplashScreen'; // Ensure this path is correct and has .css
+import '@fortawesome/fontawesome-free/css/all.min.css';
+import './SplashScreen'; // Ensure this file exists and is correctly named
 
-const SplashScreen = () => {
+const SplashScreen = ({ onComplete }) => {
   const [animate, setAnimate] = useState(false);
+  const [hasNetwork, setHasNetwork] = useState(navigator.onLine);
 
   useEffect(() => {
     setAnimate(true);
 
-    const timeout = setTimeout(() => {
-      window.location.href = '/'; // Navigate using href after 3 seconds
-    }, 5000);
+    checkNetwork();
 
-    return () => clearTimeout(timeout);
-  }, []);
+    const handleOnline = () => {
+      setHasNetwork(true);
+    };
+
+    const handleOffline = () => {
+      setHasNetwork(false);
+    };
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    // Proceed after 3 seconds regardless of network status
+    const timeout = setTimeout(() => {
+      onComplete();
+    }, 1000);
+
+    return () => {
+      clearTimeout(timeout);
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, [onComplete]);
+
+  const checkNetwork = () => {
+    setHasNetwork(navigator.onLine);
+  };
 
   return (
     <div className="splash-screen">
@@ -23,8 +46,16 @@ const SplashScreen = () => {
         </div>
         <h1 className="splash-title">PregVita</h1>
         <p className="splash-subtitle">Caring for Mothers, Protecting lives</p>
+
+        {!hasNetwork && (
+          <div className="network-error">
+            <i className="fas fa-wifi-slash"></i>
+            <p>No network connection</p>
+          </div>
+        )}
+
         <div className="splash-progress">
-          <div className="splash-progress-bar animate-pulse"></div>
+          <div className={`splash-progress-bar ${hasNetwork ? 'animate-pulse' : 'animate-pulse-slow'}`}></div>
         </div>
         <div className="loading-dots">
           <span></span>
