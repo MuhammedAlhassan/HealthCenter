@@ -108,7 +108,7 @@ const Emergency = () => {
               </div>
               
               <div className="emergency-actions">
-                <a href="tel:+2348167769208" className="btn btn-primary btn-lg">
+                <a href="tel:08167769208" className="btn btn-primary btn-lg">
                   <i className="fas fa-phone mr-2"></i>
                   Call Emergency Line
                 </a>
@@ -130,7 +130,7 @@ const Emergency = () => {
               </div>
               <h3>National Emergency</h3>
               <p className="contact-number">199</p>
-              <a href="tel:199" className="btn btn-destructive w-full">Call Now</a>
+              <a href="tel:08167769208" className="btn btn-destructive w-full">Call Now</a>
             </div>
             
             <div className="contact-card">
@@ -139,7 +139,7 @@ const Emergency = () => {
               </div>
               <h3>Maternal Hotline</h3>
               <p className="contact-number">+234-800-MATERNAL</p>
-              <a href="tel:+234800MATERNAL" className="btn btn-primary w-full">Call Now</a>
+              <a href="tel:08167769208" className="btn btn-primary w-full">Call Now</a>
             </div>
             
             <div className="contact-card">
@@ -148,7 +148,7 @@ const Emergency = () => {
               </div>
               <h3>24/7 Support</h3>
               <p className="contact-number">+234-1-HELP-NOW</p>
-              <a href="tel:+2341HELPNOW" className="btn btn-secondary w-full">Call Now</a>
+              <a href="tel:08167769208" className="btn btn-secondary w-full">Call Now</a>
             </div>
           </div>
         </div>

@@ -63,15 +63,14 @@ const AuthModal = ({ isOpen, onClose, mode, onToggleMode, onAuthSuccess }) => {
           email: formData.email,
           phone: formData.phone,
           userType: formData.userType,
-          ...(formData.userType === 'expectant-mother' && {
-            dueDate: formData.dueDate,
-            address: formData.address
-          }),
+          DueDate: formData.dueDate, // Always save as DueDate for consistency
+          address: formData.address,
           password: formData.password,
           createdAt: new Date().toISOString()
         };
         
         saveUser(userData);
+        localStorage.setItem('userData', JSON.stringify(userData)); // Keep profile in sync
         onAuthSuccess(userData);
       } else {
         // Login existing user

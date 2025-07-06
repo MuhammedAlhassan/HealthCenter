@@ -296,9 +296,7 @@ const FAQ = () => {
                 <Link to="/contactus" className="btn btn-primary">
                   Contact Us
                 </Link>
-                <a href="https://wa.me/08167769208" className="btn btn-whatsapp">
-                  <i className="fab fa-whatsapp"></i> WhatsApp Chat
-                </a>
+                <a href="tel:08167769208" className="btn btn-whatsapp">Call 0816 776 9208</a>
               </div>
             </div>
           </div>
