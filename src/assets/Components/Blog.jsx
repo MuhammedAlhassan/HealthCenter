@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import '@fortawesome/fontawesome-free/css/all.min.css';
 import './Blog';
 
 const Blog = () => {
-  // All blog posts data with image URLs
-  const allPosts = [
+  // Load posts from localStorage or use defaults
+  const defaultPosts = [
     {
       id: 'p1',
       title: 'Essential Antenatal Visits in Nigeria: What to Expect',
@@ -207,12 +207,111 @@ const Blog = () => {
       }
     }
   ];
-
-  // State management
+  const [allPosts, setAllPosts] = useState(() => {
+    const saved = localStorage.getItem('blogPosts');
+    return saved ? JSON.parse(saved) : defaultPosts;
+  });
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedPost, setSelectedPost] = useState(null);
   const postsPerPage = 3;
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [showEditor, setShowEditor] = useState(false);
+  const [editPost, setEditPost] = useState(null);
+
+  // Check if current user is admin
+  useEffect(() => {
+    const user = JSON.parse(localStorage.getItem('currentUser'));
+    setIsAdmin(user && user.role === 'admin');
+  }, []);
+
+  // Save posts to localStorage whenever they change
+  useEffect(() => {
+    localStorage.setItem('blogPosts', JSON.stringify(allPosts));
+  }, [allPosts]);
+
+  // Admin: Add or edit post
+  const handleSavePost = (post) => {
+    let updatedPosts;
+    if (post.id) {
+      // Edit
+      updatedPosts = allPosts.map(p => p.id === post.id ? post : p);
+      // Admin notification
+      const notifications = JSON.parse(localStorage.getItem('adminNotifications') || '[]');
+      notifications.unshift({
+        id: Date.now(),
+        title: 'Blog Post Edited',
+        message: `Blog post "${post.title}" was edited by admin`,
+        time: new Date().toISOString(),
+        unread: true,
+        icon: 'edit'
+      });
+      localStorage.setItem('adminNotifications', JSON.stringify(notifications));
+    } else {
+      // New post
+      post.id = 'p' + Date.now();
+      updatedPosts = [post, ...allPosts];
+      // Admin notification
+      const notifications = JSON.parse(localStorage.getItem('adminNotifications') || '[]');
+      notifications.unshift({
+        id: Date.now(),
+        title: 'New Blog Post',
+        message: `Blog post "${post.title}" was created by admin`,
+        time: new Date().toISOString(),
+        unread: true,
+        icon: 'plus'
+      });
+      localStorage.setItem('adminNotifications', JSON.stringify(notifications));
+    }
+    setAllPosts(updatedPosts);
+    setShowEditor(false);
+    setEditPost(null);
+  };
+
+  // Admin: Delete post
+  const handleDeletePost = (postId) => {
+    if (!window.confirm('Delete this post?')) return;
+    const updatedPosts = allPosts.filter(p => p.id !== postId);
+    setAllPosts(updatedPosts);
+    // Admin notification
+    const notifications = JSON.parse(localStorage.getItem('adminNotifications') || '[]');
+    notifications.unshift({
+      id: Date.now(),
+      title: 'Blog Post Deleted',
+      message: `A blog post was deleted by admin`,
+      time: new Date().toISOString(),
+      unread: true,
+      icon: 'trash'
+    });
+    localStorage.setItem('adminNotifications', JSON.stringify(notifications));
+  };
+
+  // Blog post editor form (admin only)
+  const BlogEditor = ({ post, onSave, onCancel }) => {
+    const [form, setForm] = useState(post || {
+      title: '', excerpt: '', fullContent: '', category: '', date: '', readTime: '', image: '', author: { name: '', role: '', avatar: '' }
+    });
+    return (
+      <div className="blog-editor-modal">
+        <form onSubmit={e => { e.preventDefault(); onSave(form); }}>
+          <input value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} placeholder="Title" required />
+          <input value={form.excerpt} onChange={e => setForm({ ...form, excerpt: e.target.value })} placeholder="Excerpt" required />
+          <textarea value={form.fullContent} onChange={e => setForm({ ...form, fullContent: e.target.value })} placeholder="Full Content (HTML)" required />
+          <input value={form.category} onChange={e => setForm({ ...form, category: e.target.value })} placeholder="Category" required />
+          <input value={form.date} onChange={e => setForm({ ...form, date: e.target.value })} placeholder="Date" required />
+          <input value={form.readTime} onChange={e => setForm({ ...form, readTime: e.target.value })} placeholder="Read Time" required />
+          <input value={form.image} onChange={e => setForm({ ...form, image: e.target.value })} placeholder="Image URL" required />
+          <input value={form.author.name} onChange={e => setForm({ ...form, author: { ...form.author, name: e.target.value } })} placeholder="Author Name" required />
+          <input value={form.author.role} onChange={e => setForm({ ...form, author: { ...form.author, role: e.target.value } })} placeholder="Author Role" required />
+          <input value={form.author.avatar} onChange={e => setForm({ ...form, author: { ...form.author, avatar: e.target.value } })} placeholder="Author Avatar URL" required />
+          <div className="editor-actions">
+            <button type="submit" className="btn btn-primary">Save</button>
+            <button type="button" className="btn btn-secondary" onClick={onCancel}>Cancel</button>
+          </div>
+        </form>
+      </div>
+    );
+  };
 
   // Filter posts based on search term
   const filteredPosts = allPosts.filter(post => 
@@ -241,8 +340,16 @@ const Blog = () => {
 
   return (
     <div className="blog-page">
-      {/* Main Content */}
       <div className="blog-container">
+        {/* Admin controls */}
+        {isAdmin && !showEditor && !selectedPost && (
+          <div className="admin-blog-controls">
+            <button className="btn btn-primary" onClick={() => { setShowEditor(true); setEditPost(null); }}>New Post</button>
+          </div>
+        )}
+        {isAdmin && showEditor && (
+          <BlogEditor post={editPost} onSave={handleSavePost} onCancel={() => { setShowEditor(false); setEditPost(null); }} />
+        )}
         {/* Featured Post - only shown on first page when not searching */}
         {featuredPost && currentPage === 1 && !selectedPost && (
           <section className="featured-post">
@@ -350,6 +457,13 @@ const Blog = () => {
                             Read More <i className="fas fa-arrow-right"></i>
                           </button>
                         </div>
+                        {/* Edit/Delete buttons for admin */}
+                        {isAdmin && (
+                          <div className="admin-post-actions">
+                            <button className="btn btn-secondary" onClick={() => { setShowEditor(true); setEditPost(post); }}>Edit</button>
+                            <button className="btn btn-danger" onClick={() => handleDeletePost(post.id)}>Delete</button>
+                          </div>
+                        )}
                       </article>
                     ))}
                   </div>

@@ -32,30 +32,101 @@ const Appointments = () => {
 
   // Save appointments to localStorage whenever they change
   useEffect(() => {
+    // Save current user's appointments under a unique key
+    const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
+    if (currentUser && currentUser.id) {
+      localStorage.setItem(`appointments_${currentUser.id}` , JSON.stringify(appointments));
+    }
+    // For backward compatibility, also update the generic 'appointments' key
     localStorage.setItem('appointments', JSON.stringify(appointments));
-    
+
+    // --- Robustly sync ALL user appointments to adminAppointments ---
+    const users = JSON.parse(localStorage.getItem('users') || '[]');
+    let allAdminAppointments = [];
+    users.forEach(user => {
+      let userAppointments = JSON.parse(localStorage.getItem(`appointments_${user.id}`) || '{"upcoming":[],"past":[]}');
+      // If this is the current user, use the latest state
+      if (user.id === currentUser.id) {
+        userAppointments = appointments;
+      }
+      const allUserAppointments = [...(userAppointments.upcoming || []), ...(userAppointments.past || [])];
+      allUserAppointments.forEach(appt => {
+        let doctorId = '';
+        let doctorName = appt.provider;
+        if (appt.provider) {
+          const providerName = appt.provider.split(' - ')[0].replace('Dr. ', '').trim();
+          const [firstName, ...lastNameParts] = providerName.split(' ');
+          const lastName = lastNameParts.join(' ');
+          const doctor = users.find(u => u.role === 'doctor' && u.firstName === firstName && u.lastName === lastName);
+          if (doctor) {
+            doctorId = doctor.id;
+            doctorName = `${doctor.firstName} ${doctor.lastName}`;
+          }
+        }
+        allAdminAppointments.push({
+          id: appt.id,
+          patientId: appt.patientId,
+          patientName: appt.patientName,
+          doctorId,
+          doctorName,
+          date: appt.date,
+          time: appt.time,
+          type: appt.type,
+          status: appt.status,
+          notes: appt.notes,
+          location: appt.location || '',
+        });
+      });
+    });
+    localStorage.setItem('adminAppointments', JSON.stringify(allAdminAppointments));
+    // --- End robust sync ---
+
     // Check for appointments that should move from upcoming to past
     const now = new Date();
     const upcoming = appointments.upcoming.filter(appt => {
       const apptDate = new Date(`${appt.date}T${appt.time}`);
       return apptDate > now;
     });
-    
     const past = [...appointments.past];
     let moved = false;
-    
     appointments.upcoming.forEach(appt => {
       const apptDate = new Date(`${appt.date}T${appt.time}`);
       if (apptDate <= now) {
         past.push({ ...appt, status: 'completed' });
         moved = true;
+        // Update admin appointments when moving to past
+        updateAdminAppointmentStatus(appt.id, 'completed');
       }
     });
-    
     if (moved) {
-      setAppointments({ upcoming, past });
+      // Prevent infinite loop by only updating if changed
+      setAppointments(prev => ({ ...prev, upcoming, past }));
     }
   }, [appointments]);
+
+  // Helper function to update admin appointment status
+  const updateAdminAppointmentStatus = (appointmentId, newStatus) => {
+    const adminAppointments = JSON.parse(localStorage.getItem('adminAppointments') || '[]');
+    const updatedAdminAppointments = adminAppointments.map(appt => 
+      appt.id === appointmentId ? { ...appt, status: newStatus } : appt
+    );
+    localStorage.setItem('adminAppointments', JSON.stringify(updatedAdminAppointments));
+    
+    // Add notification for admin
+    const appointment = appointments.upcoming.find(a => a.id === appointmentId);
+    if (appointment) {
+      const adminNotifications = JSON.parse(localStorage.getItem('adminNotifications') || '[]');
+      adminNotifications.unshift({
+        id: Date.now(),
+        title: `Appointment ${newStatus === 'completed' ? 'Completed' : 'Updated'}`,
+        message: `Appointment for ${appointment.patientName} on ${appointment.date} has been marked as ${newStatus}`,
+        time: new Date().toISOString(),
+        unread: true,
+        icon: 'calendar-check'
+      });
+      localStorage.setItem('adminNotifications', JSON.stringify(adminNotifications));
+    }
+  };
 
   const formatDate = (dateString) => {
     const options = { year: 'numeric', month: 'long', day: 'numeric' };
@@ -68,8 +139,10 @@ const Appointments = () => {
     return `${hour > 12 ? hour - 12 : hour}:${minutes} ${hour >= 12 ? 'PM' : 'AM'}`;
   };
 
+  // After booking an appointment, also add it to adminAppointments for admin dashboard
   const handleBooking = (e) => {
     e.preventDefault();
+    const currentUser = JSON.parse(localStorage.getItem('currentUser'));
     const newAppointment = {
       id: Date.now(),
       type: bookingForm.type === 'routine' ? 'Routine Checkup' : 
@@ -81,13 +154,61 @@ const Appointments = () => {
       provider: bookingForm.provider,
       location: bookingForm.provider.includes('Lagos University') ? 
                'Lagos University Teaching Hospital' : 'First City Hospital',
-      status: 'confirmed'
+      status: 'scheduled',
+      patientName: `${currentUser.firstName} ${currentUser.lastName}`,
+      patientId: currentUser.id,
+      notes: bookingForm.notes || ''
     };
     
+    // Update patient appointments
     setAppointments(prev => ({
       ...prev,
       upcoming: [...prev.upcoming, newAppointment]
     }));
+    
+    // Update admin appointments
+    const adminAppointments = JSON.parse(localStorage.getItem('adminAppointments') || '[]');
+    
+    // Find doctor ID from provider name
+    const providerName = bookingForm.provider.split(' - ')[0].replace('Dr. ', '').trim();
+    const [firstName, ...lastNameParts] = providerName.split(' ');
+    const lastName = lastNameParts.join(' ');
+    
+    const users = JSON.parse(localStorage.getItem('users') || '[]');
+    const doctor = users.find(u => 
+      u.role === 'doctor' && 
+      u.firstName === firstName && 
+      u.lastName === lastName
+    );
+    
+    const adminNewAppointment = {
+      id: newAppointment.id,
+      patientId: currentUser.id,
+      patientName: newAppointment.patientName,
+      doctorId: doctor?.id || '',
+      doctorName: bookingForm.provider,
+      date: bookingForm.date,
+      time: bookingForm.time,
+      type: newAppointment.type,
+      status: 'scheduled',
+      notes: bookingForm.notes,
+      location: newAppointment.location
+    };
+    
+    adminAppointments.push(adminNewAppointment);
+    localStorage.setItem('adminAppointments', JSON.stringify(adminAppointments));
+    
+    // Add notification for admin
+    const adminNotifications = JSON.parse(localStorage.getItem('adminNotifications') || '[]');
+    adminNotifications.unshift({
+      id: Date.now(),
+      title: 'New Appointment Booked',
+      message: `Appointment booked for ${adminNewAppointment.patientName} with ${adminNewAppointment.doctorName} on ${adminNewAppointment.date} at ${adminNewAppointment.time}`,
+      time: new Date().toISOString(),
+      unread: true,
+      icon: 'calendar-plus'
+    });
+    localStorage.setItem('adminNotifications', JSON.stringify(adminNotifications));
     
     setShowBookingModal(false);
     setBookingForm({ type: 'routine', date: '', time: '', provider: '', notes: '' });
@@ -109,11 +230,32 @@ const Appointments = () => {
   };
 
   const cancelAppointment = (appointmentId) => {
+    // Update patient appointments
     setAppointments(prev => ({
       ...prev,
       upcoming: prev.upcoming.filter(a => a.id !== appointmentId),
       past: prev.past.filter(a => a.id !== appointmentId)
     }));
+
+    // Update admin appointments
+    const adminAppointments = JSON.parse(localStorage.getItem('adminAppointments') || '[]');
+    const updatedAdminAppointments = adminAppointments.filter(a => a.id !== appointmentId);
+    localStorage.setItem('adminAppointments', JSON.stringify(updatedAdminAppointments));
+
+    // Add notification for admin
+    const appointment = appointments.upcoming.find(a => a.id === appointmentId);
+    if (appointment) {
+      const adminNotifications = JSON.parse(localStorage.getItem('adminNotifications') || []);
+      adminNotifications.unshift({
+        id: Date.now(),
+        title: "Appointment Cancelled",
+        message: `Appointment for ${appointment.patientName} on ${appointment.date} has been cancelled`,
+        time: new Date().toISOString(),
+        unread: true,
+        icon: 'calendar-times'
+      });
+      localStorage.setItem('adminNotifications', JSON.stringify(adminNotifications));
+    }
   };
 
   const joinVideoCall = () => {
@@ -159,7 +301,7 @@ const Appointments = () => {
             onClick={() => setActiveTab('past')}
             className={`tab-button ${activeTab === 'past' ? 'active' : ''}`}
           >
-            Emergency ({appointments.past.length})
+            Past ({appointments.past.length})
           </button>
         </div>
 
@@ -374,91 +516,20 @@ const Appointments = () => {
                     className="textarea"
                     placeholder="Any specific concerns or symptoms..."
                     value={bookingForm.notes}
-                    onChange={(e) => setBookingForm({...bookingForm, notes: e.target.value})}
-                  />
+                    onChange={e => setBookingForm({ ...bookingForm, notes: e.target.value })}
+                  ></textarea>
                 </div>
-                
-                <div className="modal-actions">
-                  <button 
-                    type="button"
-                    onClick={() => setShowBookingModal(false)}
-                    className="btn btn-outline"
-                  >
-                    Cancel
-                  </button>
+                <div className="form-actions">
                   <button type="submit" className="btn btn-primary">
-                    Book Appointment
+                    <i className="fas fa-calendar-check mr-2"></i>
+                    Confirm Booking
                   </button>
                 </div>
               </form>
             </div>
           </div>
         )}
-
-        <div className="quick-appointment-actions">
-          <h2 className="section-title">Quick Actions</h2>
-          <div className="quick-actions-grid">
-            <div className="quick-action-card">
-              <div className="quick-action-icon emergency">
-                <i className="fas fa-exclamation-triangle"></i>
-              </div>
-              <h3>Emergency Booking</h3>
-              <p>Book urgent appointment within 24 hours</p>
-              <div className="quick-action-buttons">
-                <button 
-                  onClick={() => {
-                    setBookingForm({
-                      type: 'emergency',
-                      date: new Date().toISOString().split('T')[0],
-                      time: '',
-                      provider: '',
-                      notes: 'EMERGENCY - Please call immediately'
-                    });
-                    setShowBookingModal(true);
-                  }}
-                  className="btn btn-destructive"
-                >
-                  Book Emergency
-                </button>
-              
-              </div>
-            </div>
-            
-            <div className="quick-action-card">
-              <div className="quick-action-icon telemedicine">
-                <i className="fas fa-video"></i>
-              </div>
-              <h3>Telemedicine</h3>
-              <p>Virtual consultation from home</p>
-              <div className="quick-action-buttons">
-                <button 
-                  onClick={joinVideoCall}
-                  className="btn btn-secondary"
-                >
-                  Start Video Call
-                </button>
-               
-              </div>
-            </div>
-            
-            <div className="quick-action-card">
-              <div className="quick-action-icon reminder">
-                <i className="fas fa-bell"></i>
-              </div>
-              <h3>SMS Reminders</h3>
-              <p>Get appointment reminders via SMS</p>
-              <div className="quick-action-buttons">
-                <button 
-                  onClick={() => navigate('/sms')}
-                  className="btn btn-primary"
-                >
-                  Setup Reminders
-                </button>
-                
-              </div>
-            </div>
-          </div>
-        </div>
+        {/* ...existing code for quick actions, etc... */}
       </div>
     </div>
   );

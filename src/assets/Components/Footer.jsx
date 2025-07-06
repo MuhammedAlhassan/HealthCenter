@@ -34,11 +34,10 @@ const Footer = () => {
           <div className="footer-section">
             <h4 className="footer-title">Quick Links</h4>
             <ul className="footer-links">
-              <li><a href="/AboutUs">About Us</a></li>
-
-              <li><a href="/PrivacyPolicy">Privacy Policy</a></li>
-              <li><a href="/TermsAndConditions">Terms And Conditions</a></li>
-              <li><a href="/Accessibility">Accessibility</a></li>
+              <li><a href="/aboutus">About Us</a></li>
+              <li><a href="/privacypolicy">Privacy Policy</a></li>
+              <li><a href="/termsandconditions">Terms And Conditions</a></li>
+              <li><a href="/accessibility">Accessibility</a></li>
             </ul>
           </div>
           
@@ -46,11 +45,10 @@ const Footer = () => {
           <div className="footer-section">
             <h4 className="footer-title">Support</h4>
             <ul className="footer-links">
-              <li><a href="/ContactUs">Contact Us</a></li>
-           
-              <li><a href="/Services">Services</a></li>
-              <li><a href="/Blog">Blog</a></li>
-              <li><a href="/FAQ">Faq</a></li>
+              <li><a href="/contactus">Contact Us</a></li>
+              <li><a href="/services">Services</a></li>
+              <li><a href="/blog">Blog</a></li>
+              <li><a href="/faq">Faq</a></li>
             </ul>
           </div>
         </div>
@@ -71,7 +69,7 @@ const Footer = () => {
         <div className="footer-bottom">
           <p>&copy; 2024 pregvita health Care. All rights reserved. Made with ❤️ for Nigerian mothers.</p>
         </div>
-        <div id="wet"><h1>created by </h1></div>
+        <div id="wet"><h1>created by alhassan muhammed </h1></div>
       </div>
     </footer>
   );

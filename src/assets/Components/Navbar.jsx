@@ -81,13 +81,13 @@ const Navbar = () => {
               <Link to="/dashboard" className={`nav-link ${isActive('/dashboard') ? 'active' : ''}`}>
                 Dashboard
               </Link>
-              <Link to="/clinicLocator" className={`nav-link ${isActive('/clinics') ? 'active' : ''}`}>
+              <Link to="/cliniclocator" className={`nav-link ${isActive('/cliniclocator') ? 'active' : ''}`}>
                 Find Clinics
               </Link>
-              <Link to="/HealthHub" className={`nav-link ${isActive('/health-hub') ? 'active' : ''}`}>
+              <Link to="/healthhub" className={`nav-link ${isActive('/healthhub') ? 'active' : ''}`}>
                 Health Hub
               </Link>
-              <Link to="/Emergency" className={`nav-link ${isActive('/emergency') ? 'active' : ''}`}>
+              <Link to="/emergency" className={`nav-link ${isActive('/emergency') ? 'active' : ''}`}>
                 Emergency
               </Link>
             </div>
@@ -127,13 +127,13 @@ const Navbar = () => {
                     <Link to="/dashboard" className="nav-link" onClick={() => setMobileMenuOpen(false)}>
                       Dashboard
                     </Link>
-                    <Link to="/clinicLocator" className="nav-link" onClick={() => setMobileMenuOpen(false)}>
+                    <Link to="/cliniclocator" className="nav-link" onClick={() => setMobileMenuOpen(false)}>
                       Find Clinics
                     </Link>
-                    <Link to="/HealthHub" className="nav-link" onClick={() => setMobileMenuOpen(false)}>
+                    <Link to="/healthhub" className="nav-link" onClick={() => setMobileMenuOpen(false)}>
                       Health Hub
                     </Link>
-                    <Link to="/Emergency" className="nav-link" onClick={() => setMobileMenuOpen(false)}>
+                    <Link to="/emergency" className="nav-link" onClick={() => setMobileMenuOpen(false)}>
                       Emergency
                     </Link>
                   </>

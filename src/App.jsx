@@ -69,48 +69,48 @@ const MainApp = () => {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path='/SplashScreen' element={<SplashScreen />} />
+        <Route path='/splashscreen' element={<SplashScreen />} />
       </Routes>
       <Navbar />
       <Routes>
-        <Route path='FlyerCard' element={<FlyerCard />} />
+        <Route path='/flyercard' element={<FlyerCard />} />
         <Route path='/' element={<Home />} />
-        <Route path='map' element={<Map />} />
-        <Route path='Accessibility' element={<Accessibility />} />
-        <Route path='Voice' element={<Voice />} />
-        <Route path='Cookies' element={<Cookies />} />
-        <Route path='SOSButton' element={<SOSButton />} />
-        <Route path='Dashboard' element={<Dashboard />} />
-        <Route path='Navbar' element={<Navbar />} />
-        <Route path='Card' element={<Card />} />
-        <Route path='MedicalReport' element={<MedicalReport />} />
-        <Route path='Weight' element={<Weight />} />
-        <Route path='Profile' element={<Profile />} />
-        <Route path='ClinicLocator' element={<ClinicLocator />} />
-        <Route path='HelpCenter' element={<HelpCenter />} />
+        <Route path='/map' element={<Map />} />
+        <Route path='/accessibility' element={<Accessibility />} />
+        <Route path='/voice' element={<Voice />} />
+        <Route path='/cookies' element={<Cookies />} />
+        <Route path='/sosbutton' element={<SOSButton />} />
+        <Route path='/dashboard' element={<Dashboard />} />
+        <Route path='/navbar' element={<Navbar />} />
+        <Route path='/card' element={<Card />} />
+        <Route path='/medicalreport' element={<MedicalReport />} />
+        <Route path='/weight' element={<Weight />} />
+        <Route path='/profile' element={<Profile />} />
+        <Route path='/cliniclocator' element={<ClinicLocator />} />
+        <Route path='/helpcenter' element={<HelpCenter />} />
         <Route path='/login' element={<Login />} />
-        <Route path='/VideoCall' element={<VideoCall />} />
-        <Route path='/UserDashboards' element={<UserDashboards />} />
-        <Route path='Register' element={<Register />} />
-        <Route path='AuthModal' element={<AuthModal />} />
-        <Route path='TermsAndConditions' element={<TermsAndConditions />} />
-        <Route path='AboutUs' element={<AboutUs />} />
-        <Route path='SMS' element={<SMS />} />
-        <Route path='Emergency' element={<Emergency />} />
-        <Route path='FeaturesSection' element={<FeaturesSection />} />
-        <Route path='HeroSection' element={<HeroSection />} />
-        <Route path='Services' element={<Services />} />
-        <Route path='OurPartners' element={<OurPartners />} />
-        <Route path='PrivacyPolicy' element={<PrivacyPolicy />} />
-        <Route path='SignUpModal' element={<SignUpModal />} />
-        <Route path='ContactUs' element={<ContactUs />} />
-        <Route path='FAQ' element={<FAQ />} />
-        <Route path='Kick' element={<Kick />} />
-        <Route path='Admin' element={<Admin />} />
-        <Route path='Career' element={<Career />} />
-        <Route path='Blog' element={<Blog />} />
-        <Route path='HealthHub' element={<HealthHub />} />
-        <Route path='Appointments' element={<Appointments />} />
+        <Route path='/videocall' element={<VideoCall />} />
+        <Route path='/userdashboards' element={<UserDashboards />} />
+        <Route path='/register' element={<Register />} />
+        <Route path='/authmodal' element={<AuthModal />} />
+        <Route path='/termsandconditions' element={<TermsAndConditions />} />
+        <Route path='/aboutus' element={<AboutUs />} />
+        <Route path='/sms' element={<SMS />} />
+        <Route path='/emergency' element={<Emergency />} />
+        <Route path='/featuressection' element={<FeaturesSection />} />
+        <Route path='/herosection' element={<HeroSection />} />
+        <Route path='/services' element={<Services />} />
+        <Route path='/ourpartners' element={<OurPartners />} />
+        <Route path='/privacypolicy' element={<PrivacyPolicy />} />
+        <Route path='/signupmodal' element={<SignUpModal />} />
+        <Route path='/contactus' element={<ContactUs />} />
+        <Route path='/faq' element={<FAQ />} />
+        <Route path='/kick' element={<Kick />} />
+        <Route path='/admin' element={<Admin />} />
+        <Route path='/career' element={<Career />} />
+        <Route path='/blog' element={<Blog />} />
+        <Route path='/healthhub' element={<HealthHub />} />
+        <Route path='/appointments' element={<Appointments />} />
       </Routes>
       <Footer />
     </BrowserRouter>

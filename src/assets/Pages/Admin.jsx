@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link, useNavigate } from 'react-router-dom';
-import './Admin';
+import { FaTimes, FaHeart, FaSpinner, FaEye, FaTrash, FaUser, FaBell, FaSignOutAlt, FaCog, FaSearch, FaBars, FaChevronDown, FaChevronUp, FaHome, FaChartLine, FaUsers, FaCalendarCheck, FaNewspaper, FaQuestionCircle, FaBook, FaExclamationTriangle, FaCogs, FaUserPlus, FaBaby, FaCalendarAlt, FaFlask, FaDownload, FaUserSlash, FaCalendarTimes, FaRedo, FaPlus, FaEdit, FaSave, FaEyeSlash, FaCalendarPlus, FaArrowUp, FaArrowDown, FaChartArea, FaFileMedical, FaBellSlash, FaCheck } from 'react-icons/fa';
+import Blog from '../Components/Blog';
 
-// Mock API function
+// Utility functions
 const apiRequest = async (method, endpoint, data = null) => {
   try {
     const token = localStorage.getItem('token');
@@ -33,373 +34,535 @@ const apiRequest = async (method, endpoint, data = null) => {
 
 // Authentication functions
 const loginUser = async (credentials) => {
-  return new Promise((resolve, reject) => {
-    setTimeout(() => {
-      if ((credentials.email === 'admin@pregvita.com' && credentials.password === 'admin123') || 
-          (credentials.email === 'muhammedalhassan815@gmail.com' && credentials.password === 'hajji 815')) {
-        const token = 'mock-jwt-token';
-        localStorage.setItem('token', token);
-        resolve({ 
-          token, 
-          user: {
-            name: "Dr. Sarah Johnson",
-            role: "admin",
-            avatar: "https://images.unsplash.com/photo-1582750433449-648ed127bb54?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=400&h=400"
-          }
-        });
-      } else {
-        reject(new Error('Invalid credentials'));
+  // First check local users
+  const users = JSON.parse(localStorage.getItem('users') || '[]');
+  const user = users.find(
+    user => (user.email === credentials.email || user.phone === credentials.email) && 
+            user.password === credentials.password
+  );
+
+  if (user) {
+    const token = 'mock-jwt-token-' + Date.now();
+    localStorage.setItem('token', token);
+    localStorage.setItem('currentUser', JSON.stringify(user));
+    
+    // Add login notification for admin
+    if (user.role === 'admin') {
+      const notifications = JSON.parse(localStorage.getItem('adminNotifications') || '[]');
+      notifications.unshift({
+        id: Date.now(),
+        title: "Admin Login",
+        message: `Admin ${user.firstName} ${user.lastName} logged in`,
+        time: new Date().toISOString(),
+        unread: true,
+        icon: 'user'
+      });
+      localStorage.setItem('adminNotifications', JSON.stringify(notifications));
+    }
+    
+    return { 
+      token, 
+      user: {
+        ...user,
+        avatar: user.avatar || "https://images.unsplash.com/photo-1582750433449-648ed127bb54?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=400&h=400"
       }
-    }, 500);
-  });
+    };
+  }
+
+  // Check hardcoded admin credentials
+  if ((credentials.email === 'admin@pregvita.com' && credentials.password === 'admin123') || 
+      (credentials.email === 'muhammedalhassan815@gmail.com' && credentials.password === 'hajji815')) {
+    const token = 'mock-jwt-token-' + Date.now();
+    localStorage.setItem('token', token);
+    const adminUser = {
+      id: 'admin-1',
+      firstName: 'Admin',
+      lastName: 'User',
+      email: credentials.email,
+      role: 'admin',
+      avatar: "https://images.unsplash.com/photo-1582750433449-648ed127bb54?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=400&h=400"
+    };
+    localStorage.setItem('currentUser', JSON.stringify(adminUser));
+    
+    // Add login notification
+    const notifications = JSON.parse(localStorage.getItem('adminNotifications') || '[]');
+    notifications.unshift({
+      id: Date.now(),
+      title: "Admin Login",
+      message: `Admin ${adminUser.firstName} ${adminUser.lastName} logged in`,
+      time: new Date().toISOString(),
+      unread: true,
+      icon: 'user'
+    });
+    localStorage.setItem('adminNotifications', JSON.stringify(notifications));
+    
+    return { 
+      token, 
+      user: adminUser
+    };
+  }
+
+  throw new Error('Invalid credentials');
 };
 
 const logoutUser = () => {
   localStorage.removeItem('token');
+  localStorage.removeItem('currentUser');
 };
 
 const checkAuth = () => {
   return !!localStorage.getItem('token');
 };
 
-// Mock data functions
-const fetchStats = () => ({
-  totalPatients: 1245,
-  activePregnancies: 342,
-  todayAppointments: 28,
-  emergencyAlerts: 3,
-  newRegistrations: 15,
-  messages: 7
-});
+const registerUser = async (userData) => {
+  const users = JSON.parse(localStorage.getItem('users') || '[]');
+  
+  // Check if user already exists
+  const userExists = users.some(
+    user => user.email === userData.email || user.phone === userData.phone
+  );
 
-const fetchUsers = () => [
-  {
-    id: 1,
-    fullName: "Maria Rodriguez",
-    email: "maria@example.com",
-    registrationDate: "2023-05-15T10:30:00Z",
-    phone: "+1 555-123-4567",
-    status: "active",
-    role: "patient",
-    lastLogin: "2023-05-20T08:45:00Z"
-  },
-  {
-    id: 2,
-    fullName: "Jennifer Kim",
-    email: "jennifer@example.com",
-    registrationDate: "2023-05-14T14:20:00Z",
-    phone: "+1 555-987-6543",
-    status: "active",
-    role: "patient",
-    lastLogin: "2023-05-19T14:30:00Z"
-  },
-  {
-    id: 3,
-    fullName: "Sarah Thompson",
-    email: "sarah@example.com",
-    registrationDate: "2023-05-12T09:15:00Z",
-    phone: "+1 555-456-7890",
-    status: "active",
-    role: "patient",
-    lastLogin: "2023-05-18T10:15:00Z"
-  },
-  {
-    id: 4,
-    fullName: "Emily Davis",
-    email: "emily@example.com",
-    registrationDate: "2023-05-10T16:45:00Z",
-    phone: "+1 555-789-0123",
-    status: "inactive",
-    role: "patient",
-    lastLogin: "2023-05-15T11:20:00Z"
-  },
-  {
-    id: 5,
-    fullName: "Jessica Wilson",
-    email: "jessica@example.com",
-    registrationDate: "2023-05-08T11:20:00Z",
-    phone: "+1 555-234-5678",
-    status: "active",
-    role: "patient",
-    lastLogin: "2023-05-20T09:30:00Z"
-  },
-  {
-    id: 6,
-    fullName: "Dr. Michael Chen",
-    email: "michael@example.com",
-    registrationDate: "2023-04-20T09:00:00Z",
-    phone: "+1 555-345-6789",
-    status: "active",
-    role: "doctor",
-    lastLogin: "2023-05-20T07:45:00Z"
-  },
-  {
-    id: 7,
-    fullName: "Dr. Lisa Wong",
-    email: "lisa@example.com",
-    registrationDate: "2023-04-18T10:15:00Z",
-    phone: "+1 555-456-7890",
-    status: "active",
-    role: "doctor",
-    lastLogin: "2023-05-19T16:30:00Z"
-  },
-  {
-    id: 8,
-    fullName: "Nurse Amanda Smith",
-    email: "amanda@example.com",
-    registrationDate: "2023-04-15T14:30:00Z",
-    phone: "+1 555-567-8901",
-    status: "active",
-    role: "nurse",
-    lastLogin: "2023-05-20T08:15:00Z"
+  if (userExists) {
+    throw new Error('User already exists with this email or phone');
   }
-];
 
-const fetchAppointments = () => [
-  {
-    id: 1,
-    patientName: "Maria Rodriguez",
-    patientId: 1,
-    appointmentTime: "09:30 AM",
-    date: "2023-05-21",
-    type: "Prenatal Checkup",
-    doctorName: "Dr. Sarah Johnson",
-    doctorId: 9,
-    status: "confirmed",
-    notes: "First trimester checkup"
-  },
-  {
-    id: 2,
-    patientName: "Jennifer Kim",
-    patientId: 2,
-    appointmentTime: "10:45 AM",
-    date: "2023-05-21",
-    type: "Ultrasound",
-    doctorName: "Dr. Michael Chen",
-    doctorId: 6,
-    status: "confirmed",
-    notes: "20-week anatomy scan"
-  },
-  {
-    id: 3,
-    patientName: "Sarah Thompson",
-    patientId: 3,
-    appointmentTime: "01:15 PM",
-    date: "2023-05-21",
-    type: "Emergency Consultation",
-    doctorName: "Dr. Sarah Johnson",
-    doctorId: 9,
-    status: "completed",
-    notes: "Reported severe cramping"
-  },
-  {
-    id: 4,
-    patientName: "Emily Davis",
-    patientId: 4,
-    appointmentTime: "03:00 PM",
-    date: "2023-05-21",
-    type: "Postnatal Checkup",
-    doctorName: "Dr. Lisa Wong",
-    doctorId: 7,
-    status: "cancelled",
-    notes: "Patient rescheduled"
-  },
-  {
-    id: 5,
-    patientName: "Jessica Wilson",
-    patientId: 5,
-    appointmentTime: "11:30 AM",
-    date: "2023-05-22",
-    type: "Routine Checkup",
-    doctorName: "Dr. Michael Chen",
-    doctorId: 6,
-    status: "scheduled",
-    notes: "Third trimester checkup"
+  const newUser = {
+    id: Date.now().toString(),
+    ...userData,
+    createdAt: new Date().toISOString(),
+    status: 'active',
+    lastLogin: new Date().toISOString()
+  };
+
+  users.push(newUser);
+  localStorage.setItem('users', JSON.stringify(users));
+  
+  // Add registration notification for admin
+  const notifications = JSON.parse(localStorage.getItem('adminNotifications') || '[]');
+  notifications.unshift({
+    id: Date.now(),
+    title: "New User Registration",
+    message: `${userData.firstName} ${userData.lastName} (${userData.userType}) registered`,
+    time: new Date().toISOString(),
+    unread: true,
+    icon: 'user-plus'
+  });
+  localStorage.setItem('adminNotifications', JSON.stringify(notifications));
+
+  return newUser;
+};
+
+// Data fetching functions
+const fetchStats = () => {
+  const users = JSON.parse(localStorage.getItem('users') || '[]');
+  const appointments = fetchAppointments();
+  const today = new Date().toISOString().split('T')[0];
+  return {
+    totalPatients: users.filter(u => u.role === 'patient').length,
+    activePregnancies: users.filter(u => u.userType === 'expectant-mother' && u.status === 'active').length,
+    todayAppointments: appointments.filter(a => a.date === today).length,
+    emergencyAlerts: JSON.parse(localStorage.getItem('emergencyLogs') || '[]').filter(e => e.status === 'pending').length,
+    newRegistrations: users.filter(u => {
+      const regDate = new Date(u.createdAt).toISOString().split('T')[0];
+      return regDate === today;
+    }).length,
+    messages: 7
+  };
+};
+
+const fetchUsers = () => {
+  return JSON.parse(localStorage.getItem('users') || '[]');
+};
+
+const fetchAppointments = () => {
+  const data = JSON.parse(localStorage.getItem('adminAppointments') || '[]');
+  return Array.isArray(data) ? data : [];
+};
+
+const fetchBlogPosts = () => {
+  return JSON.parse(localStorage.getItem('blogPosts') || '[]');
+};
+
+const fetchFAQs = () => {
+  return JSON.parse(localStorage.getItem('faqs') || '[]');
+};
+
+const fetchSMSReminders = () => {
+  return JSON.parse(localStorage.getItem('smsReminders') || '[]');
+};
+
+const fetchEmergencyLogs = () => {
+  return JSON.parse(localStorage.getItem('emergencyLogs') || '[]');
+};
+
+const fetchNotifications = () => {
+  return JSON.parse(localStorage.getItem('adminNotifications') || '[]');
+};
+
+const fetchSettings = () => {
+  const defaults = {
+    clinicName: "Pregvita",
+    address: "789 Health Ave, Suite 100, New York, NY 10005",
+    phone: "+1 212-555-3000",
+    email: "info@pregvita.com",
+    workingHours: "Monday to Friday: 8:00 AM - 6:00 PM",
+    smsNotifications: true,
+    emailNotifications: true,
+    appointmentReminderHours: 24,
+    emergencyContact: "+1 212-555-9111"
+  };
+  
+  const saved = JSON.parse(localStorage.getItem('settings') || '{}');
+  return { ...defaults, ...saved };
+};
+
+// Initialize sample data if empty
+const initializeSampleData = () => {
+  if (!localStorage.getItem('users')) {
+    const sampleUsers = [
+      {
+        id: 1,
+        firstName: "Maria",
+        lastName: "Rodriguez",
+        email: "maria@example.com",
+        phone: "+1 555-123-4567",
+        userType: "expectant-mother",
+        role: "patient",
+        dueDate: "2023-11-15",
+        address: "123 Main St, New York, NY",
+        password: "password123",
+        status: "active",
+        createdAt: "2023-05-15T10:30:00Z",
+        lastLogin: "2023-05-20T08:45:00Z"
+      },
+      {
+        id: 2,
+        firstName: "Jennifer",
+        lastName: "Kim",
+        email: "jennifer@example.com",
+        phone: "+1 555-987-6543",
+        userType: "expectant-mother",
+        role: "patient",
+        dueDate: "2023-10-20",
+        address: "456 Oak Ave, New York, NY",
+        password: "password123",
+        status: "active",
+        createdAt: "2023-05-14T14:20:00Z",
+        lastLogin: "2023-05-19T14:30:00Z"
+      },
+      {
+        id: 3,
+        firstName: "Sarah",
+        lastName: "Thompson",
+        email: "sarah@example.com",
+        phone: "+1 555-456-7890",
+        userType: "expectant-mother",
+        role: "patient",
+        dueDate: "2023-12-05",
+        address: "789 Pine Rd, New York, NY",
+        password: "password123",
+        status: "active",
+        createdAt: "2023-05-12T09:15:00Z",
+        lastLogin: "2023-05-18T10:15:00Z"
+      },
+      {
+        id: 4,
+        firstName: "Emily",
+        lastName: "Davis",
+        email: "emily@example.com",
+        phone: "+1 555-789-0123",
+        userType: "expectant-mother",
+        role: "patient",
+        dueDate: "2023-09-30",
+        address: "321 Elm St, New York, NY",
+        password: "password123",
+        status: "inactive",
+        createdAt: "2023-05-10T16:45:00Z",
+        lastLogin: "2023-05-15T11:20:00Z"
+      },
+      {
+        id: 5,
+        firstName: "Jessica",
+        lastName: "Wilson",
+        email: "jessica@example.com",
+        phone: "+1 555-234-5678",
+        userType: "expectant-mother",
+        role: "patient",
+        dueDate: "2024-01-15",
+        address: "654 Maple Dr, New York, NY",
+        password: "password123",
+        status: "active",
+        createdAt: "2023-05-08T11:20:00Z",
+        lastLogin: "2023-05-20T09:30:00Z"
+      },
+      {
+        id: 6,
+        firstName: "Michael",
+        lastName: "Chen",
+        email: "michael@example.com",
+        phone: "+1 555-345-6789",
+        userType: "healthcare-provider",
+        role: "doctor",
+        password: "password123",
+        status: "active",
+        createdAt: "2023-04-20T09:00:00Z",
+        lastLogin: "2023-05-20T07:45:00Z"
+      },
+      {
+        id: 7,
+        firstName: "Lisa",
+        lastName: "Wong",
+        email: "lisa@example.com",
+        phone: "+1 555-456-7890",
+        userType: "healthcare-provider",
+        role: "doctor",
+        password: "password123",
+        status: "active",
+        createdAt: "2023-04-18T10:15:00Z",
+        lastLogin: "2023-05-19T16:30:00Z"
+      },
+      {
+        id: 8,
+        firstName: "Amanda",
+        lastName: "Smith",
+        email: "amanda@example.com",
+        phone: "+1 555-567-8901",
+        userType: "healthcare-provider",
+        role: "nurse",
+        password: "password123",
+        status: "active",
+        createdAt: "2023-04-15T14:30:00Z",
+        lastLogin: "2023-05-20T08:15:00Z"
+      }
+    ];
+    localStorage.setItem('users', JSON.stringify(sampleUsers));
   }
-];
 
-const fetchBlogPosts = () => [
-  {
-    id: 1,
-    title: "Pregnancy Nutrition: What to Eat for a Healthy Baby",
-    author: "Dr. Sarah Johnson",
-    date: "2023-05-15",
-    category: "Nutrition",
-    status: "published",
-    views: 1245,
-    content: "Proper nutrition during pregnancy is essential for the health of both mother and baby. This article covers the key nutrients needed during each trimester."
-  },
-  {
-    id: 2,
-    title: "Exercise During Pregnancy: Safe Workouts for Each Trimester",
-    author: "Dr. Michael Chen",
-    date: "2023-05-10",
-    category: "Fitness",
-    status: "published",
-    views: 987,
-    content: "Staying active during pregnancy has numerous benefits. Learn which exercises are safe and recommended for each stage of pregnancy."
-  },
-  {
-    id: 3,
-    title: "Understanding Prenatal Vitamins",
-    author: "Dr. Lisa Wong",
-    date: "2023-05-05",
-    category: "Health",
-    status: "draft",
-    views: 0,
-    content: "Prenatal vitamins play a crucial role in filling nutritional gaps. This guide explains what to look for in a prenatal vitamin."
-  },
-  {
-    id: 4,
-    title: "Preparing for Labor: What to Expect",
-    author: "Nurse Amanda Smith",
-    date: "2023-04-28",
-    category: "Labor & Delivery",
-    status: "published",
-    views: 1567,
-    content: "A comprehensive guide to the stages of labor, pain management options, and what to pack in your hospital bag."
+  if (!localStorage.getItem('blogPosts')) {
+    const sampleBlogPosts = [
+      {
+        id: 1,
+        title: "Pregnancy Nutrition: What to Eat for a Healthy Baby",
+        author: "Dr. Sarah Johnson",
+        date: "2023-05-15",
+        category: "Nutrition",
+        status: "published",
+        views: 1245,
+        content: "Proper nutrition during pregnancy is essential for the health of both mother and baby. This article covers the key nutrients needed during each trimester."
+      },
+      {
+        id: 2,
+        title: "Exercise During Pregnancy: Safe Workouts for Each Trimester",
+        author: "Dr. Michael Chen",
+        date: "2023-05-10",
+        category: "Fitness",
+        status: "published",
+        views: 987,
+        content: "Staying active during pregnancy has numerous benefits. Learn which exercises are safe and recommended for each stage of pregnancy."
+      },
+      {
+        id: 3,
+        title: "Understanding Prenatal Vitamins",
+        author: "Dr. Lisa Wong",
+        date: "2023-05-05",
+        category: "Health",
+        status: "draft",
+        views: 0,
+        content: "Prenatal vitamins play a crucial role in filling nutritional gaps. This guide explains what to look for in a prenatal vitamin."
+      },
+      {
+        id: 4,
+        title: "Preparing for Labor: What to Expect",
+        author: "Nurse Amanda Smith",
+        date: "2023-04-28",
+        category: "Labor & Delivery",
+        status: "published",
+        views: 1567,
+        content: "A comprehensive guide to the stages of labor, pain management options, and what to pack in your hospital bag."
+      }
+    ];
+    localStorage.setItem('blogPosts', JSON.stringify(sampleBlogPosts));
   }
-];
 
-const fetchFAQs = () => [
-  {
-    id: 1,
-    question: "When should I schedule my first prenatal visit?",
-    answer: "You should schedule your first prenatal visit as soon as you know you're pregnant, typically around 8 weeks.",
-    category: "Prenatal Care",
-    status: "published"
-  },
-  {
-    id: 2,
-    question: "What are the danger signs during pregnancy?",
-    answer: "Severe abdominal pain, heavy bleeding, sudden swelling, severe headaches, and decreased fetal movement are all danger signs that require immediate medical attention.",
-    category: "Pregnancy Health",
-    status: "published"
-  },
-  {
-    id: 3,
-    question: "How much weight should I gain during pregnancy?",
-    answer: "Weight gain recommendations vary based on your pre-pregnancy BMI. Generally, 25-35 pounds for normal weight women, 15-25 for overweight, and 28-40 for underweight.",
-    category: "Nutrition",
-    status: "published"
-  },
-  {
-    id: 4,
-    question: "Can I travel during pregnancy?",
-    answer: "Most women can travel safely until close to their due date, but it's best to avoid long trips after 36 weeks. Always consult with your doctor before traveling.",
-    category: "Lifestyle",
-    status: "draft"
+  if (!localStorage.getItem('faqs')) {
+    const sampleFAQs = [
+      {
+        id: 1,
+        question: "When should I schedule my first prenatal visit?",
+        answer: "You should schedule your first prenatal visit as soon as you know you're pregnant, typically around 8 weeks.",
+        category: "Prenatal Care",
+        status: "published"
+      },
+      {
+        id: 2,
+        question: "What are the danger signs during pregnancy?",
+        answer: "Severe abdominal pain, heavy bleeding, sudden swelling, severe headaches, and decreased fetal movement are all danger signs that require immediate medical attention.",
+        category: "Pregnancy Health",
+        status: "published"
+      },
+      {
+        id: 3,
+        question: "How much weight should I gain during pregnancy?",
+        answer: "Weight gain recommendations vary based on your pre-pregnancy BMI. Generally, 25-35 pounds for normal weight women, 15-25 for overweight, and 28-40 for underweight.",
+        category: "Nutrition",
+        status: "published"
+      },
+      {
+        id: 4,
+        question: "Can I travel during pregnancy?",
+        answer: "Most women can travel safely until close to their due date, but it's best to avoid long trips after 36 weeks. Always consult with your doctor before traveling.",
+        category: "Lifestyle",
+        status: "draft"
+      }
+    ];
+    localStorage.setItem('faqs', JSON.stringify(sampleFAQs));
   }
-];
 
-const fetchHealthHub = () => [
-  {
-    id: 1,
-    title: "Pregnancy Week by Week",
-    category: "Pregnancy",
-    status: "published",
-    lastUpdated: "2023-05-10",
-    content: "Detailed guide to fetal development and maternal changes during each week of pregnancy."
-  },
-  {
-    id: 2,
-    title: "Newborn Care Guide",
-    category: "Postpartum",
-    status: "published",
-    lastUpdated: "2023-04-25",
-    content: "Essential information for new parents on feeding, diapering, bathing, and caring for your newborn."
-  },
-  {
-    id: 3,
-    title: "Breastfeeding Basics",
-    category: "Postpartum",
-    status: "published",
-    lastUpdated: "2023-04-15",
-    content: "Comprehensive guide to breastfeeding techniques, positions, and troubleshooting common issues."
-  },
-  {
-    id: 4,
-    title: "Managing Morning Sickness",
-    category: "Pregnancy",
-    status: "draft",
-    lastUpdated: "2023-05-18",
-    content: "Tips and remedies for dealing with nausea and vomiting during pregnancy."
+  if (!localStorage.getItem('smsReminders')) {
+    const sampleSMSReminders = [
+      {
+        id: 1,
+        patientId: 1,
+        patientName: "Maria Rodriguez",
+        phone: "+1 555-123-4567",
+        message: "Reminder: Your prenatal appointment is tomorrow at 9:30 AM",
+        status: "delivered",
+        dateSent: new Date().toISOString()
+      },
+      {
+        id: 2,
+        patientId: 2,
+        patientName: "Jennifer Kim",
+        phone: "+1 555-987-6543",
+        message: "Reminder: Your ultrasound is scheduled for tomorrow at 10:45 AM",
+        status: "delivered",
+        dateSent: new Date().toISOString()
+      },
+      {
+        id: 3,
+        patientId: 3,
+        patientName: "Sarah Thompson",
+        phone: "+1 555-456-7890",
+        message: "Reminder: Please take your prenatal vitamins today",
+        status: "failed",
+        dateSent: new Date().toISOString()
+      },
+      {
+        id: 4,
+        patientId: 4,
+        patientName: "Emily Davis",
+        phone: "+1 555-789-0123",
+        message: "Reminder: Your postnatal checkup is tomorrow at 3:00 PM",
+        status: "scheduled",
+        dateSent: new Date(Date.now() + 86400000).toISOString()
+      }
+    ];
+    localStorage.setItem('smsReminders', JSON.stringify(sampleSMSReminders));
   }
-];
 
-const fetchSMSReminders = () => [
-  {
-    id: 1,
-    patientName: "Maria Rodriguez",
-    phone: "+1 555-123-4567",
-    message: "Reminder: Your prenatal appointment is tomorrow at 9:30 AM",
-    status: "delivered",
-    dateSent: "2023-05-20T08:00:00Z"
-  },
-  {
-    id: 2,
-    patientName: "Jennifer Kim",
-    phone: "+1 555-987-6543",
-    message: "Reminder: Your ultrasound is scheduled for tomorrow at 10:45 AM",
-    status: "delivered",
-    dateSent: "2023-05-20T08:00:00Z"
-  },
-  {
-    id: 3,
-    patientName: "Sarah Thompson",
-    phone: "+1 555-456-7890",
-    message: "Reminder: Please take your prenatal vitamins today",
-    status: "failed",
-    dateSent: "2023-05-21T09:00:00Z"
-  },
-  {
-    id: 4,
-    patientName: "Emily Davis",
-    phone: "+1 555-789-0123",
-    message: "Reminder: Your postnatal checkup is tomorrow at 3:00 PM",
-    status: "scheduled",
-    dateSent: "2023-05-22T08:00:00Z"
+  if (!localStorage.getItem('emergencyLogs')) {
+    const sampleEmergencyLogs = [
+      {
+        id: 1,
+        patientId: 3,
+        patientName: "Sarah Thompson",
+        date: new Date().toISOString(),
+        type: "Severe Cramping",
+        status: "resolved",
+        notes: "Patient reported severe cramping at 20 weeks. Recommended immediate evaluation."
+      },
+      {
+        id: 2,
+        patientId: 5,
+        patientName: "Jessica Wilson",
+        date: new Date(Date.now() - 86400000 * 3).toISOString(),
+        type: "Decreased Fetal Movement",
+        status: "resolved",
+        notes: "Patient reported no fetal movement for 12 hours. Recommended kick count monitoring."
+      },
+      {
+        id: 3,
+        patientId: 1,
+        patientName: "Maria Rodriguez",
+        date: new Date(Date.now() - 86400000 * 6).toISOString(),
+        type: "Vaginal Bleeding",
+        status: "pending",
+        notes: "Patient reported light spotting. Scheduled for ultrasound."
+      }
+    ];
+    localStorage.setItem('emergencyLogs', JSON.stringify(sampleEmergencyLogs));
   }
-];
 
-const fetchEmergencyLogs = () => [
-  {
-    id: 1,
-    patientName: "Sarah Thompson",
-    date: "2023-05-21T13:15:00Z",
-    type: "Severe Cramping",
-    status: "resolved",
-    notes: "Patient reported severe cramping at 20 weeks. Recommended immediate evaluation."
-  },
-  {
-    id: 2,
-    patientName: "Jessica Wilson",
-    date: "2023-05-18T22:30:00Z",
-    type: "Decreased Fetal Movement",
-    status: "resolved",
-    notes: "Patient reported no fetal movement for 12 hours. Recommended kick count monitoring."
-  },
-  {
-    id: 3,
-    patientName: "Maria Rodriguez",
-    date: "2023-05-15T10:45:00Z",
-    type: "Vaginal Bleeding",
-    status: "pending",
-    notes: "Patient reported light spotting. Scheduled for ultrasound."
+  if (!localStorage.getItem('adminNotifications')) {
+    const sampleNotifications = [
+      {
+        id: 1,
+        title: "New Patient Registration",
+        message: "Maria Rodriguez has registered as a new patient",
+        time: new Date(Date.now() - 600000).toISOString(),
+        icon: "user-plus",
+        unread: true
+      },
+      {
+        id: 2,
+        title: "Appointment Reminder",
+        message: "Jennifer Kim has an appointment tomorrow at 9:30 AM",
+        time: new Date(Date.now() - 1500000).toISOString(),
+        icon: "calendar-check",
+        unread: true
+      },
+      {
+        id: 3,
+        title: "Emergency Alert",
+        message: "High priority emergency case reported by Sarah Thompson",
+        time: new Date(Date.now() - 3600000).toISOString(),
+        icon: "exclamation-triangle",
+        unread: true
+      },
+      {
+        id: 4,
+        title: "Lab Results Ready",
+        message: "Lab results for Emily Davis are ready for review",
+        time: new Date(Date.now() - 7200000).toISOString(),
+        icon: "flask",
+        unread: false
+      },
+      {
+        id: 5,
+        title: "System Update",
+        message: "New system update available for installation",
+        time: new Date(Date.now() - 18000000).toISOString(),
+        icon: "download",
+        unread: false
+      }
+    ];
+    localStorage.setItem('adminNotifications', JSON.stringify(sampleNotifications));
   }
-];
 
-const fetchSettings = () => ({
-  clinicName: "Pregvita Health Center",
-  address: "789 Health Ave, Suite 100, New York, NY 10005",
-  phone: "+1 212-555-3000",
-  email: "info@pregvita.com",
-  workingHours: "Monday to Friday: 8:00 AM - 6:00 PM",
-  smsNotifications: true,
-  emailNotifications: true,
-  appointmentReminderHours: 24,
-  emergencyContact: "+1 212-555-9111"
-});
+  // Only initialize adminAppointments if missing or empty
+  if (!localStorage.getItem('adminAppointments') || JSON.parse(localStorage.getItem('adminAppointments') || '[]').length === 0) {
+    const sampleAppointments = [
+      // You can add a few sample appointments here if desired, or leave as empty array
+      // Example:
+      // {
+      //   id: 1,
+      //   patientId: 1,
+      //   patientName: "Maria Rodriguez",
+      //   doctorId: 2,
+      //   doctorName: "Dr. Michael Chen",
+      //   date: "2023-07-10",
+      //   time: "09:30",
+      //   type: "Prenatal Checkup",
+      //   status: "scheduled",
+      //   notes: "First visit."
+      // }
+    ];
+    localStorage.setItem('adminAppointments', JSON.stringify(sampleAppointments));
+  }
+};
+
+// Initialize data on first load
+initializeSampleData();
 
 // Login Modal Component
 const LoginModal = ({ onLogin, onClose }) => {
@@ -435,12 +598,12 @@ const LoginModal = ({ onLogin, onClose }) => {
 
   return (
     <div className="ali-modal-overlay">
-      <div className="ali-modal">
+      <div className="ali-auth-modal">
         <div className="ali-modal-header">
-          <h2>Admin Login</h2>
-          <button className="ali-modal-close" onClick={onClose}>
-            <i className="fas fa-times"></i>
+          <button className="ali-modal-close-btn" onClick={onClose}>
+            <FaTimes />
           </button>
+          <h2>Admin Login</h2>
         </div>
         <div className="ali-modal-body">
           <form onSubmit={handleSubmit}>
@@ -464,13 +627,13 @@ const LoginModal = ({ onLogin, onClose }) => {
                 required
               />
             </div>
-            {error && <div className="ali-form-error">{error}</div>}
+            {error && <div className="ali-error-message">{error}</div>}
             <button 
               type="submit" 
               className="ali-btn ali-btn-primary"
               disabled={isLoading}
             >
-              {isLoading ? 'Logging in...' : 'Login'}
+              {isLoading ? <FaSpinner className="ali-spinner" /> : 'Login'}
             </button>
           </form>
         </div>
@@ -535,7 +698,7 @@ const AnalyticsPage = () => {
           </select>
         </div>
         <button className="ali-btn ali-btn-primary">
-          <i className="fas fa-download"></i>
+          <FaDownload />
           Export Data
         </button>
       </div>
@@ -655,12 +818,6 @@ const AnalyticsPage = () => {
                   <td>72%</td>
                 </tr>
                 <tr>
-                  <td>Health Hub</td>
-                  <td>8</td>
-                  <td>3,210</td>
-                  <td>65%</td>
-                </tr>
-                <tr>
                   <td>FAQs</td>
                   <td>24</td>
                   <td>8,765</td>
@@ -684,16 +841,21 @@ const AnalyticsPage = () => {
 // User Management Page Component
 const UserManagementPage = () => {
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const [roleFilter, setRoleFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
   const [isAddingUser, setIsAddingUser] = useState(false);
-  const [isEditingUser, setIsEditingUser] = useState(null);
   const [userForm, setUserForm] = useState({
-    fullName: '',
+    firstName: '',
+    lastName: '',
     email: '',
     phone: '',
+    userType: 'expectant-mother',
     role: 'patient',
+    password: '',
+    dueDate: '',
+    address: '',
     status: 'active'
   });
   
@@ -703,32 +865,50 @@ const UserManagementPage = () => {
   });
 
   const deleteUserMutation = useMutation({
-    mutationFn: (userId) => apiRequest('DELETE', `/api/users/${userId}`),
+    mutationFn: (userId) => {
+      const users = JSON.parse(localStorage.getItem('users') || '[]');
+      const updatedUsers = users.filter(user => user.id !== userId);
+      localStorage.setItem('users', JSON.stringify(updatedUsers));
+      
+      // Add notification
+      const notifications = JSON.parse(localStorage.getItem('adminNotifications') || '[]');
+      const deletedUser = users.find(u => u.id === userId);
+      if (deletedUser) {
+        notifications.unshift({
+          id: Date.now(),
+          title: "User Deleted",
+          message: `${deletedUser.firstName} ${deletedUser.lastName} (${deletedUser.role}) was removed from the system`,
+          time: new Date().toISOString(),
+          unread: true,
+          icon: 'user-slash'
+        });
+        localStorage.setItem('adminNotifications', JSON.stringify(notifications));
+      }
+      
+      return Promise.resolve();
+    },
     onSuccess: () => {
       queryClient.invalidateQueries(['users']);
     },
   });
 
   const addUserMutation = useMutation({
-    mutationFn: (userData) => apiRequest('POST', '/api/users', userData),
+    mutationFn: (userData) => registerUser(userData),
     onSuccess: () => {
       queryClient.invalidateQueries(['users']);
       setIsAddingUser(false);
       setUserForm({
-        fullName: '',
+        firstName: '',
+        lastName: '',
         email: '',
         phone: '',
+        userType: 'expectant-mother',
         role: 'patient',
+        password: '',
+        dueDate: '',
+        address: '',
         status: 'active'
       });
-    },
-  });
-
-  const updateUserMutation = useMutation({
-    mutationFn: ({ id, userData }) => apiRequest('PUT', `/api/users/${id}`, userData),
-    onSuccess: () => {
-      queryClient.invalidateQueries(['users']);
-      setIsEditingUser(null);
     },
   });
 
@@ -745,7 +925,7 @@ const UserManagementPage = () => {
   };
 
   const handleDeleteUser = (userId) => {
-    if (window.confirm('Are you sure you want to delete this user?')) {
+    if (window.confirm('Are you sure you want to delete this user? This will also log them out if they are currently logged in.')) {
       deleteUserMutation.mutate(userId);
     }
   };
@@ -763,36 +943,14 @@ const UserManagementPage = () => {
     addUserMutation.mutate(userForm);
   };
 
-  const handleEditUserSubmit = (e) => {
-    e.preventDefault();
-    updateUserMutation.mutate({ id: isEditingUser.id, userData: userForm });
-  };
-
-  const startEditingUser = (user) => {
-    setIsEditingUser(user);
-    setUserForm({
-      fullName: user.fullName,
-      email: user.email,
-      phone: user.phone,
-      role: user.role,
-      status: user.status
-    });
-  };
-
-  const cancelEditing = () => {
-    setIsEditingUser(null);
-    setUserForm({
-      fullName: '',
-      email: '',
-      phone: '',
-      role: 'patient',
-      status: 'active'
-    });
+  const viewUserDashboard = (userId) => {
+    navigate(`/user/${userId}`);
   };
 
   const filteredUsers = users?.filter(user => {
-    const matchesSearch = user.fullName.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                         user.email.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch = `${user.firstName} ${user.lastName}`.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                         user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         user.phone?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesRole = roleFilter === 'all' || user.role === roleFilter;
     const matchesStatus = statusFilter === 'all' || user.status === statusFilter;
     
@@ -824,7 +982,7 @@ const UserManagementPage = () => {
             value={searchTerm}
             onChange={handleSearch}
           />
-          <i className="fas fa-search"></i>
+          <FaSearch />
         </div>
 
         <div className="ali-filter-group">
@@ -851,26 +1009,39 @@ const UserManagementPage = () => {
           className="ali-btn ali-btn-primary"
           onClick={() => setIsAddingUser(true)}
         >
-          <i className="fas fa-user-plus"></i>
+          <FaUserPlus />
           Add New User
         </button>
       </div>
 
-      {(isAddingUser || isEditingUser) && (
+      {isAddingUser && (
         <div className="ali-add-user-form">
-          <h3>{isEditingUser ? 'Edit User' : 'Add New User'}</h3>
-          <form onSubmit={isEditingUser ? handleEditUserSubmit : handleAddUserSubmit}>
+          <h3>Add New User</h3>
+          <form onSubmit={handleAddUserSubmit}>
             <div className="ali-form-row">
               <div className="ali-form-group">
-                <label>Full Name</label>
+                <label>First Name</label>
                 <input
                   type="text"
-                  name="fullName"
-                  value={userForm.fullName}
+                  name="firstName"
+                  value={userForm.firstName}
                   onChange={handleFormChange}
                   required
                 />
               </div>
+              <div className="ali-form-group">
+                <label>Last Name</label>
+                <input
+                  type="text"
+                  name="lastName"
+                  value={userForm.lastName}
+                  onChange={handleFormChange}
+                  required
+                />
+              </div>
+            </div>
+
+            <div className="ali-form-row">
               <div className="ali-form-group">
                 <label>Email</label>
                 <input
@@ -881,8 +1052,6 @@ const UserManagementPage = () => {
                   required
                 />
               </div>
-            </div>
-            <div className="ali-form-row">
               <div className="ali-form-group">
                 <label>Phone</label>
                 <input
@@ -891,6 +1060,20 @@ const UserManagementPage = () => {
                   value={userForm.phone}
                   onChange={handleFormChange}
                 />
+              </div>
+            </div>
+
+            <div className="ali-form-row">
+              <div className="ali-form-group">
+                <label>User Type</label>
+                <select
+                  name="userType"
+                  value={userForm.userType}
+                  onChange={handleFormChange}
+                >
+                  <option value="expectant-mother">Expectant Mother</option>
+                  <option value="healthcare-provider">Healthcare Provider</option>
+                </select>
               </div>
               <div className="ali-form-group">
                 <label>Role</label>
@@ -917,18 +1100,54 @@ const UserManagementPage = () => {
                 </select>
               </div>
             </div>
+
+            {userForm.userType === 'expectant-mother' && (
+              <div className="ali-form-row">
+                <div className="ali-form-group">
+                  <label>Due Date</label>
+                  <input
+                    type="date"
+                    name="dueDate"
+                    value={userForm.dueDate}
+                    onChange={handleFormChange}
+                  />
+                </div>
+                <div className="ali-form-group">
+                  <label>Address</label>
+                  <input
+                    type="text"
+                    name="address"
+                    value={userForm.address}
+                    onChange={handleFormChange}
+                  />
+                </div>
+              </div>
+            )}
+
+            <div className="ali-form-group">
+              <label>Password</label>
+              <input
+                type="password"
+                name="password"
+                value={userForm.password}
+                onChange={handleFormChange}
+                required
+                minLength="6"
+              />
+            </div>
+
             <div className="ali-form-actions">
               <button 
                 type="submit" 
                 className="ali-btn ali-btn-primary"
-                disabled={addUserMutation.isLoading || updateUserMutation.isLoading}
+                disabled={addUserMutation.isLoading}
               >
-                {addUserMutation.isLoading || updateUserMutation.isLoading ? 'Saving...' : 'Save User'}
+                {addUserMutation.isLoading ? <FaSpinner className="ali-spinner" /> : 'Save User'}
               </button>
               <button 
                 type="button" 
                 className="ali-btn ali-btn-secondary"
-                onClick={isEditingUser ? cancelEditing : () => setIsAddingUser(false)}
+                onClick={() => setIsAddingUser(false)}
               >
                 Cancel
               </button>
@@ -955,36 +1174,36 @@ const UserManagementPage = () => {
                 <td>
                   <div className="ali-user-info">
                     <div className="ali-user-avatar">
-                      {user.fullName.charAt(0)}
+                      {user.firstName?.charAt(0) || ''}{user.lastName?.charAt(0) || ''}
                     </div>
                     <div className="ali-user-details">
-                      <div className="ali-user-name">{user.fullName}</div>
-                      <div className="ali-user-phone">{user.phone}</div>
+                      <div className="ali-user-name">{user.firstName} {user.lastName}</div>
+                      <div className="ali-user-phone">{user.phone || 'N/A'}</div>
+                      <div className="ali-user-role-status">
+                        <span className={`ali-role-badge ${user.role || 'unknown'}`}>{user.role || 'N/A'}</span>
+                        <span className={`ali-status-badge ${user.status || 'unknown'}`}>{user.status || 'N/A'}</span>
+                      </div>
                     </div>
                   </div>
                 </td>
                 <td>{user.email}</td>
                 <td>
-                  <span className={`ali-role-badge ${user.role}`}>
-                    {user.role}
-                  </span>
+                  <span className={`ali-role-badge ${user.role || 'unknown'}`}>{user.role || 'N/A'}</span>
                 </td>
                 <td>
-                  <span className={`ali-status-badge ${user.status}`}>
-                    {user.status}
-                  </span>
+                  <span className={`ali-status-badge ${user.status || 'unknown'}`}>{user.status || 'N/A'}</span>
                 </td>
                 <td>
-                  {new Date(user.lastLogin).toLocaleDateString()}
+                  {user.lastLogin ? new Date(user.lastLogin).toLocaleDateString() : 'Never'}
                 </td>
                 <td>
                   <div className="ali-action-buttons">
                     <button 
                       className="ali-btn ali-btn-icon" 
-                      title="Edit"
-                      onClick={() => startEditingUser(user)}
+                      title="View Dashboard"
+                      onClick={() => viewUserDashboard(user.id)}
                     >
-                      <i className="fas fa-edit"></i>
+                      <FaEye />
                     </button>
                     <button 
                       className="ali-btn ali-btn-icon ali-danger" 
@@ -992,7 +1211,7 @@ const UserManagementPage = () => {
                       onClick={() => handleDeleteUser(user.id)}
                       disabled={deleteUserMutation.isLoading}
                     >
-                      <i className="fas fa-trash"></i>
+                      <FaTrash />
                     </button>
                   </div>
                 </td>
@@ -1003,7 +1222,7 @@ const UserManagementPage = () => {
 
         {filteredUsers?.length === 0 && (
           <div className="ali-no-results">
-            <i className="fas fa-user-slash"></i>
+            <FaUserSlash />
             <p>No users found matching your criteria</p>
           </div>
         )}
@@ -1019,7 +1238,6 @@ const AppointmentsPage = () => {
   const [statusFilter, setStatusFilter] = useState('all');
   const [doctorFilter, setDoctorFilter] = useState('all');
   const [isAddingAppointment, setIsAddingAppointment] = useState(false);
-  const [isEditingAppointment, setIsEditingAppointment] = useState(null);
   const [appointmentForm, setAppointmentForm] = useState({
     patientId: '',
     doctorId: '',
@@ -1034,15 +1252,60 @@ const AppointmentsPage = () => {
     queryFn: fetchAppointments,
   });
 
+  const { data: users } = useQuery({
+    queryKey: ['users'],
+    queryFn: fetchUsers,
+  });
+
   const deleteAppointmentMutation = useMutation({
-    mutationFn: (appointmentId) => apiRequest('DELETE', `/api/appointments/${appointmentId}`),
+    mutationFn: (appointmentId) => {
+      const appointments = JSON.parse(localStorage.getItem('adminAppointments') || '[]');
+      const updatedAppointments = appointments.filter(a => a.id !== appointmentId);
+      localStorage.setItem('adminAppointments', JSON.stringify(updatedAppointments));
+      // Add notification for deletion
+      const notifications = JSON.parse(localStorage.getItem('adminNotifications') || '[]');
+      notifications.unshift({
+        id: Date.now(),
+        title: 'Appointment Deleted',
+        message: 'An appointment was deleted by admin.',
+        time: new Date().toISOString(),
+        unread: true,
+        icon: 'calendar-times'
+      });
+      localStorage.setItem('adminNotifications', JSON.stringify(notifications));
+      return Promise.resolve();
+    },
     onSuccess: () => {
       queryClient.invalidateQueries(['appointments']);
     },
   });
 
   const addAppointmentMutation = useMutation({
-    mutationFn: (appointmentData) => apiRequest('POST', '/api/appointments', appointmentData),
+    mutationFn: (appointmentData) => {
+      const appointments = JSON.parse(localStorage.getItem('adminAppointments') || '[]');
+      const newAppointment = {
+        id: Date.now(),
+        ...appointmentData,
+        status: 'scheduled',
+        patientName: users?.find(u => u.id.toString() === appointmentData.patientId)?.firstName + ' ' + 
+                    users?.find(u => u.id.toString() === appointmentData.patientId)?.lastName,
+        doctorName: users?.find(u => u.id.toString() === appointmentData.doctorId)?.firstName + ' ' + 
+                   users?.find(u => u.id.toString() === appointmentData.doctorId)?.lastName
+      };
+      appointments.push(newAppointment);
+      localStorage.setItem('adminAppointments', JSON.stringify(appointments));
+      // Add notification for new appointment
+      const notifications = JSON.parse(localStorage.getItem('adminNotifications') || '[]');
+      notifications.unshift({
+        id: Date.now(),
+        title: 'New Appointment Booked',
+        message: `Appointment booked for ${newAppointment.patientName} with ${newAppointment.doctorName} on ${newAppointment.date} at ${newAppointment.time}`,
+        time: new Date().toISOString(),
+        unread: true,
+        icon: 'calendar-plus'
+      });
+      localStorage.setItem('adminNotifications', JSON.stringify(notifications));
+    },
     onSuccess: () => {
       queryClient.invalidateQueries(['appointments']);
       setIsAddingAppointment(false);
@@ -1058,10 +1321,32 @@ const AppointmentsPage = () => {
   });
 
   const updateAppointmentMutation = useMutation({
-    mutationFn: ({ id, appointmentData }) => apiRequest('PUT', `/api/appointments/${id}`, appointmentData),
+    mutationFn: ({ id, status }) => {
+      const appointments = JSON.parse(localStorage.getItem('adminAppointments') || '[]');
+      const updatedAppointments = appointments.map(a => 
+        a.id === id ? { ...a, status } : a
+      );
+      localStorage.setItem('adminAppointments', JSON.stringify(updatedAppointments));
+      
+      // Add notification
+      const notifications = JSON.parse(localStorage.getItem('adminNotifications') || '[]');
+      const appointment = appointments.find(a => a.id === id);
+      if (appointment) {
+        notifications.unshift({
+          id: Date.now(),
+          title: `Appointment ${status === 'confirmed' ? 'Confirmed' : status === 'cancelled' ? 'Cancelled' : 'Completed'}`,
+          message: `Appointment for ${appointment.patientName} on ${appointment.date} has been ${status}`,
+          time: new Date().toISOString(),
+          unread: true,
+          icon: status === 'confirmed' ? 'calendar-check' : status === 'cancelled' ? 'calendar-times' : 'calendar-alt'
+        });
+        localStorage.setItem('adminNotifications', JSON.stringify(notifications));
+      }
+      
+      return Promise.resolve();
+    },
     onSuccess: () => {
       queryClient.invalidateQueries(['appointments']);
-      setIsEditingAppointment(null);
     },
   });
 
@@ -1096,33 +1381,8 @@ const AppointmentsPage = () => {
     addAppointmentMutation.mutate(appointmentForm);
   };
 
-  const handleEditAppointmentSubmit = (e) => {
-    e.preventDefault();
-    updateAppointmentMutation.mutate({ id: isEditingAppointment.id, appointmentData: appointmentForm });
-  };
-
-  const startEditingAppointment = (appointment) => {
-    setIsEditingAppointment(appointment);
-    setAppointmentForm({
-      patientId: appointment.patientId,
-      doctorId: appointment.doctorId.toString(),
-      date: appointment.date,
-      time: appointment.appointmentTime,
-      type: appointment.type,
-      notes: appointment.notes
-    });
-  };
-
-  const cancelEditing = () => {
-    setIsEditingAppointment(null);
-    setAppointmentForm({
-      patientId: '',
-      doctorId: '',
-      date: '',
-      time: '',
-      type: 'Prenatal Checkup',
-      notes: ''
-    });
+  const handleStatusChange = (appointmentId, newStatus) => {
+    updateAppointmentMutation.mutate({ id: appointmentId, status: newStatus });
   };
 
   const filteredAppointments = appointments?.filter(appointment => {
@@ -1143,6 +1403,9 @@ const AppointmentsPage = () => {
       </div>
     );
   }
+
+  const doctors = users?.filter(user => user.role === 'doctor');
+  const patients = users?.filter(user => user.role === 'patient');
 
   return (
     <div className="ali-page-content">
@@ -1178,9 +1441,9 @@ const AppointmentsPage = () => {
           <label>Doctor:</label>
           <select value={doctorFilter} onChange={handleDoctorFilter}>
             <option value="all">All Doctors</option>
-            <option value="9">Dr. Sarah Johnson</option>
-            <option value="6">Dr. Michael Chen</option>
-            <option value="7">Dr. Lisa Wong</option>
+            {doctors?.map(doctor => (
+              <option key={doctor.id} value={doctor.id}>{doctor.firstName} {doctor.lastName}</option>
+            ))}
           </select>
         </div>
 
@@ -1188,25 +1451,31 @@ const AppointmentsPage = () => {
           className="ali-btn ali-btn-primary"
           onClick={() => setIsAddingAppointment(true)}
         >
-          <i className="fas fa-calendar-plus"></i>
+          <FaCalendarPlus />
           New Appointment
         </button>
       </div>
 
-      {(isAddingAppointment || isEditingAppointment) && (
+      {isAddingAppointment && (
         <div className="ali-add-appointment-form">
-          <h3>{isEditingAppointment ? 'Edit Appointment' : 'Schedule New Appointment'}</h3>
-          <form onSubmit={isEditingAppointment ? handleEditAppointmentSubmit : handleAddAppointmentSubmit}>
+          <h3>Schedule New Appointment</h3>
+          <form onSubmit={handleAddAppointmentSubmit}>
             <div className="ali-form-row">
               <div className="ali-form-group">
-                <label>Patient ID</label>
-                <input
-                  type="text"
+                <label>Patient</label>
+                <select
                   name="patientId"
                   value={appointmentForm.patientId}
                   onChange={handleFormChange}
                   required
-                />
+                >
+                  <option value="">Select Patient</option>
+                  {patients?.map(patient => (
+                    <option key={patient.id} value={patient.id}>
+                      {patient.firstName} {patient.lastName}
+                    </option>
+                  ))}
+                </select>
               </div>
               <div className="ali-form-group">
                 <label>Doctor</label>
@@ -1217,9 +1486,11 @@ const AppointmentsPage = () => {
                   required
                 >
                   <option value="">Select Doctor</option>
-                  <option value="9">Dr. Sarah Johnson</option>
-                  <option value="6">Dr. Michael Chen</option>
-                  <option value="7">Dr. Lisa Wong</option>
+                  {doctors?.map(doctor => (
+                    <option key={doctor.id} value={doctor.id}>
+                      {doctor.firstName} {doctor.lastName}
+                    </option>
+                  ))}
                 </select>
               </div>
             </div>
@@ -1271,14 +1542,14 @@ const AppointmentsPage = () => {
               <button 
                 type="submit" 
                 className="ali-btn ali-btn-primary"
-                disabled={addAppointmentMutation.isLoading || updateAppointmentMutation.isLoading}
+                disabled={addAppointmentMutation.isLoading}
               >
-                {addAppointmentMutation.isLoading || updateAppointmentMutation.isLoading ? 'Saving...' : 'Save Appointment'}
+                {addAppointmentMutation.isLoading ? <FaSpinner className="ali-spinner" /> : 'Save Appointment'}
               </button>
               <button 
                 type="button" 
                 className="ali-btn ali-btn-secondary"
-                onClick={isEditingAppointment ? cancelEditing : () => setIsAddingAppointment(false)}
+                onClick={() => setIsAddingAppointment(false)}
               >
                 Cancel
               </button>
@@ -1305,7 +1576,7 @@ const AppointmentsPage = () => {
                 <td>
                   <div className="ali-patient-info">
                     <div className="ali-patient-avatar">
-                      {appointment.patientName.charAt(0)}
+                      {appointment.patientName.split(' ').map(n => n.charAt(0)).join('')}
                     </div>
                     <div className="ali-patient-details">
                       <div className="ali-patient-name">{appointment.patientName}</div>
@@ -1316,15 +1587,22 @@ const AppointmentsPage = () => {
                 <td>
                   <div className="ali-appointment-time">
                     <div className="ali-appointment-date">{appointment.date}</div>
-                    <div className="ali-appointment-hour">{appointment.appointmentTime}</div>
+                    <div className="ali-appointment-hour">{appointment.time}</div>
                   </div>
                 </td>
                 <td>{appointment.type}</td>
                 <td>{appointment.doctorName}</td>
                 <td>
-                  <span className={`ali-status-badge ${appointment.status}`}>
-                    {appointment.status}
-                  </span>
+                  <select
+                    value={appointment.status}
+                    onChange={(e) => handleStatusChange(appointment.id, e.target.value)}
+                    className={`ali-status-select ${appointment.status}`}
+                  >
+                    <option value="scheduled">Scheduled</option>
+                    <option value="confirmed">Confirmed</option>
+                    <option value="completed">Completed</option>
+                    <option value="cancelled">Cancelled</option>
+                  </select>
                 </td>
                 <td>
                   <div className="ali-action-buttons">
@@ -1333,14 +1611,7 @@ const AppointmentsPage = () => {
                       title="View"
                       onClick={() => console.log('View appointment', appointment.id)}
                     >
-                      <i className="fas fa-eye"></i>
-                    </button>
-                    <button 
-                      className="ali-btn ali-btn-icon" 
-                      title="Edit"
-                      onClick={() => startEditingAppointment(appointment)}
-                    >
-                      <i className="fas fa-edit"></i>
+                      <FaEye />
                     </button>
                     <button 
                       className="ali-btn ali-btn-icon ali-danger" 
@@ -1348,7 +1619,7 @@ const AppointmentsPage = () => {
                       onClick={() => handleDeleteAppointment(appointment.id)}
                       disabled={deleteAppointmentMutation.isLoading}
                     >
-                      <i className="fas fa-trash"></i>
+                      <FaTrash />
                     </button>
                   </div>
                 </td>
@@ -1359,7 +1630,7 @@ const AppointmentsPage = () => {
 
         {filteredAppointments?.length === 0 && (
           <div className="ali-no-results">
-            <i className="fas fa-calendar-times"></i>
+            <FaCalendarTimes />
             <p>No appointments found matching your criteria</p>
           </div>
         )}
@@ -1375,7 +1646,6 @@ const BlogPage = () => {
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
   const [isAddingPost, setIsAddingPost] = useState(false);
-  const [isEditingPost, setIsEditingPost] = useState(null);
   const [postForm, setPostForm] = useState({
     title: '',
     author: 'Dr. Sarah Johnson',
@@ -1390,14 +1660,59 @@ const BlogPage = () => {
   });
 
   const deletePostMutation = useMutation({
-    mutationFn: (postId) => apiRequest('DELETE', `/api/blog/${postId}`),
+    mutationFn: (postId) => {
+      const posts = JSON.parse(localStorage.getItem('blogPosts') || '[]');
+      const updatedPosts = posts.filter(p => p.id !== postId);
+      localStorage.setItem('blogPosts', JSON.stringify(updatedPosts));
+      
+      // Add notification
+      const notifications = JSON.parse(localStorage.getItem('adminNotifications') || '[]');
+      const deletedPost = posts.find(p => p.id === postId);
+      if (deletedPost) {
+        notifications.unshift({
+          id: Date.now(),
+          title: "Blog Post Deleted",
+          message: `Post "${deletedPost.title}" was removed`,
+          time: new Date().toISOString(),
+          unread: true,
+          icon: 'trash'
+        });
+        localStorage.setItem('adminNotifications', JSON.stringify(notifications));
+      }
+      
+      return Promise.resolve();
+    },
     onSuccess: () => {
       queryClient.invalidateQueries(['blog']);
     },
   });
 
   const addPostMutation = useMutation({
-    mutationFn: (postData) => apiRequest('POST', '/api/blog', postData),
+    mutationFn: (postData) => {
+      const posts = JSON.parse(localStorage.getItem('blogPosts') || '[]');
+      const newPost = {
+        id: Date.now(),
+        ...postData,
+        date: new Date().toISOString().split('T')[0],
+        views: 0
+      };
+      posts.push(newPost);
+      localStorage.setItem('blogPosts', JSON.stringify(posts));
+      
+      // Add notification
+      const notifications = JSON.parse(localStorage.getItem('adminNotifications') || '[]');
+      notifications.unshift({
+        id: Date.now(),
+        title: "New Blog Post",
+        message: `Post "${newPost.title}" was created`,
+        time: new Date().toISOString(),
+        unread: true,
+        icon: 'newspaper'
+      });
+      localStorage.setItem('adminNotifications', JSON.stringify(notifications));
+      
+      return Promise.resolve(newPost);
+    },
     onSuccess: () => {
       queryClient.invalidateQueries(['blog']);
       setIsAddingPost(false);
@@ -1412,10 +1727,32 @@ const BlogPage = () => {
   });
 
   const updatePostMutation = useMutation({
-    mutationFn: ({ id, postData }) => apiRequest('PUT', `/api/blog/${id}`, postData),
+    mutationFn: ({ id, postData }) => {
+      const posts = JSON.parse(localStorage.getItem('blogPosts') || '[]');
+      const updatedPosts = posts.map(p => 
+        p.id === id ? { ...p, ...postData } : p
+      );
+      localStorage.setItem('blogPosts', JSON.stringify(updatedPosts));
+      
+      // Add notification
+      const notifications = JSON.parse(localStorage.getItem('adminNotifications') || '[]');
+      const updatedPost = posts.find(p => p.id === id);
+      if (updatedPost) {
+        notifications.unshift({
+          id: Date.now(),
+          title: "Blog Post Updated",
+          message: `Post "${updatedPost.title}" was modified`,
+          time: new Date().toISOString(),
+          unread: true,
+          icon: 'edit'
+        });
+        localStorage.setItem('adminNotifications', JSON.stringify(notifications));
+      }
+      
+      return Promise.resolve();
+    },
     onSuccess: () => {
       queryClient.invalidateQueries(['blog']);
-      setIsEditingPost(null);
     },
   });
 
@@ -1448,33 +1785,6 @@ const BlogPage = () => {
   const handleAddPostSubmit = (e) => {
     e.preventDefault();
     addPostMutation.mutate(postForm);
-  };
-
-  const handleEditPostSubmit = (e) => {
-    e.preventDefault();
-    updatePostMutation.mutate({ id: isEditingPost.id, postData: postForm });
-  };
-
-  const startEditingPost = (post) => {
-    setIsEditingPost(post);
-    setPostForm({
-      title: post.title,
-      author: post.author,
-      category: post.category,
-      status: post.status,
-      content: post.content || ''
-    });
-  };
-
-  const cancelEditing = () => {
-    setIsEditingPost(null);
-    setPostForm({
-      title: '',
-      author: 'Dr. Sarah Johnson',
-      category: 'Nutrition',
-      status: 'draft',
-      content: ''
-    });
   };
 
   const filteredPosts = posts?.filter(post => {
@@ -1511,7 +1821,7 @@ const BlogPage = () => {
             value={searchTerm}
             onChange={handleSearch}
           />
-          <i className="fas fa-search"></i>
+          <FaSearch />
         </div>
 
         <div className="ali-filter-group">
@@ -1538,15 +1848,15 @@ const BlogPage = () => {
           className="ali-btn ali-btn-primary"
           onClick={() => setIsAddingPost(true)}
         >
-          <i className="fas fa-plus"></i>
+          <FaPlus />
           New Post
         </button>
       </div>
 
-      {(isAddingPost || isEditingPost) && (
+      {isAddingPost && (
         <div className="ali-add-post-form">
-          <h3>{isEditingPost ? 'Edit Blog Post' : 'Create New Blog Post'}</h3>
-          <form onSubmit={isEditingPost ? handleEditPostSubmit : handleAddPostSubmit}>
+          <h3>Create New Blog Post</h3>
+          <form onSubmit={handleAddPostSubmit}>
             <div className="ali-form-group">
               <label>Title</label>
               <input
@@ -1610,14 +1920,14 @@ const BlogPage = () => {
               <button 
                 type="submit" 
                 className="ali-btn ali-btn-primary"
-                disabled={addPostMutation.isLoading || updatePostMutation.isLoading}
+                disabled={addPostMutation.isLoading}
               >
-                {addPostMutation.isLoading || updatePostMutation.isLoading ? 'Saving...' : 'Save Post'}
+                {addPostMutation.isLoading ? <FaSpinner className="ali-spinner" /> : 'Save Post'}
               </button>
               <button 
                 type="button" 
                 className="ali-btn ali-btn-secondary"
-                onClick={isEditingPost ? cancelEditing : () => setIsAddingPost(false)}
+                onClick={() => setIsAddingPost(false)}
               >
                 Cancel
               </button>
@@ -1646,7 +1956,7 @@ const BlogPage = () => {
                 <td>{post.author}</td>
                 <td>{post.date}</td>
                 <td>
-                  <span className={`ali-category-badge ${post.category.toLowerCase()}`}>
+                  <span className={`ali-category-badge ${post.category.toLowerCase().replace(' & ', '-')}`}>
                     {post.category}
                   </span>
                 </td>
@@ -1661,23 +1971,25 @@ const BlogPage = () => {
                     <button 
                       className="ali-btn ali-btn-icon" 
                       title="Edit"
-                      onClick={() => startEditingPost(post)}
+                      onClick={() => {
+                        setPostForm({
+                          title: post.title,
+                          author: post.author,
+                          category: post.category,
+                          status: post.status,
+                          content: post.content
+                        });
+                        setIsAddingPost(true);
+                      }}
                     >
-                      <i className="fas fa-edit"></i>
-                    </button>
-                    <button 
-                      className="ali-btn ali-btn-icon" 
-                      title="View"
-                      onClick={() => console.log('View post', post.id)}
-                    >
-                      <i className="fas fa-eye"></i>
+                      <FaEdit />
                     </button>
                     <button 
                       className="ali-btn ali-btn-icon ali-danger" 
                       title="Delete"
                       onClick={() => handleDeletePost(post.id)}
                     >
-                      <i className="fas fa-trash"></i>
+                      <FaTrash />
                     </button>
                   </div>
                 </td>
@@ -1697,7 +2009,6 @@ const FAQsPage = () => {
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
   const [isAddingFAQ, setIsAddingFAQ] = useState(false);
-  const [isEditingFAQ, setIsEditingFAQ] = useState(null);
   const [faqForm, setFaqForm] = useState({
     question: '',
     answer: '',
@@ -1711,14 +2022,57 @@ const FAQsPage = () => {
   });
 
   const deleteFAQMutation = useMutation({
-    mutationFn: (faqId) => apiRequest('DELETE', `/api/faqs/${faqId}`),
+    mutationFn: (faqId) => {
+      const faqs = JSON.parse(localStorage.getItem('faqs') || '[]');
+      const updatedFAQs = faqs.filter(f => f.id !== faqId);
+      localStorage.setItem('faqs', JSON.stringify(updatedFAQs));
+      
+      // Add notification
+      const notifications = JSON.parse(localStorage.getItem('adminNotifications') || '[]');
+      const deletedFAQ = faqs.find(f => f.id === faqId);
+      if (deletedFAQ) {
+        notifications.unshift({
+          id: Date.now(),
+          title: "FAQ Deleted",
+          message: `Question "${deletedFAQ.question}" was removed`,
+          time: new Date().toISOString(),
+          unread: true,
+          icon: 'trash'
+        });
+        localStorage.setItem('adminNotifications', JSON.stringify(notifications));
+      }
+      
+      return Promise.resolve();
+    },
     onSuccess: () => {
       queryClient.invalidateQueries(['faqs']);
     },
   });
 
   const addFAQMutation = useMutation({
-    mutationFn: (faqData) => apiRequest('POST', '/api/faqs', faqData),
+    mutationFn: (faqData) => {
+      const faqs = JSON.parse(localStorage.getItem('faqs') || '[]');
+      const newFAQ = {
+        id: Date.now(),
+        ...faqData
+      };
+      faqs.push(newFAQ);
+      localStorage.setItem('faqs', JSON.stringify(faqs));
+      
+      // Add notification
+      const notifications = JSON.parse(localStorage.getItem('adminNotifications') || '[]');
+      notifications.unshift({
+        id: Date.now(),
+        title: "New FAQ Added",
+        message: `Question "${newFAQ.question}" was added`,
+        time: new Date().toISOString(),
+        unread: true,
+        icon: 'question-circle'
+      });
+      localStorage.setItem('adminNotifications', JSON.stringify(notifications));
+      
+      return Promise.resolve(newFAQ);
+    },
     onSuccess: () => {
       queryClient.invalidateQueries(['faqs']);
       setIsAddingFAQ(false);
@@ -1732,10 +2086,32 @@ const FAQsPage = () => {
   });
 
   const updateFAQMutation = useMutation({
-    mutationFn: ({ id, faqData }) => apiRequest('PUT', `/api/faqs/${id}`, faqData),
+    mutationFn: ({ id, faqData }) => {
+      const faqs = JSON.parse(localStorage.getItem('faqs') || '[]');
+      const updatedFAQs = faqs.map(f => 
+        f.id === id ? { ...f, ...faqData } : f
+      );
+      localStorage.setItem('faqs', JSON.stringify(updatedFAQs));
+      
+      // Add notification
+      const notifications = JSON.parse(localStorage.getItem('adminNotifications') || '[]');
+      const updatedFAQ = faqs.find(f => f.id === id);
+      if (updatedFAQ) {
+        notifications.unshift({
+          id: Date.now(),
+          title: "FAQ Updated",
+          message: `Question "${updatedFAQ.question}" was modified`,
+          time: new Date().toISOString(),
+          unread: true,
+          icon: 'edit'
+        });
+        localStorage.setItem('adminNotifications', JSON.stringify(notifications));
+      }
+      
+      return Promise.resolve();
+    },
     onSuccess: () => {
       queryClient.invalidateQueries(['faqs']);
-      setIsEditingFAQ(null);
     },
   });
 
@@ -1768,31 +2144,6 @@ const FAQsPage = () => {
   const handleAddFAQSubmit = (e) => {
     e.preventDefault();
     addFAQMutation.mutate(faqForm);
-  };
-
-  const handleEditFAQSubmit = (e) => {
-    e.preventDefault();
-    updateFAQMutation.mutate({ id: isEditingFAQ.id, faqData: faqForm });
-  };
-
-  const startEditingFAQ = (faq) => {
-    setIsEditingFAQ(faq);
-    setFaqForm({
-      question: faq.question,
-      answer: faq.answer,
-      category: faq.category,
-      status: faq.status
-    });
-  };
-
-  const cancelEditing = () => {
-    setIsEditingFAQ(null);
-    setFaqForm({
-      question: '',
-      answer: '',
-      category: 'Prenatal Care',
-      status: 'draft'
-    });
   };
 
   const filteredFAQs = faqs?.filter(faq => {
@@ -1829,7 +2180,7 @@ const FAQsPage = () => {
             value={searchTerm}
             onChange={handleSearch}
           />
-          <i className="fas fa-search"></i>
+          <FaSearch />
         </div>
 
         <div className="ali-filter-group">
@@ -1856,15 +2207,15 @@ const FAQsPage = () => {
           className="ali-btn ali-btn-primary"
           onClick={() => setIsAddingFAQ(true)}
         >
-          <i className="fas fa-plus"></i>
+          <FaPlus />
           New FAQ
         </button>
       </div>
 
-      {(isAddingFAQ || isEditingFAQ) && (
+      {isAddingFAQ && (
         <div className="ali-add-faq-form">
-          <h3>{isEditingFAQ ? 'Edit FAQ' : 'Add New FAQ'}</h3>
-          <form onSubmit={isEditingFAQ ? handleEditFAQSubmit : handleAddFAQSubmit}>
+          <h3>Add New FAQ</h3>
+          <form onSubmit={handleAddFAQSubmit}>
             <div className="ali-form-group">
               <label>Question</label>
               <input
@@ -1915,14 +2266,14 @@ const FAQsPage = () => {
               <button 
                 type="submit" 
                 className="ali-btn ali-btn-primary"
-                disabled={addFAQMutation.isLoading || updateFAQMutation.isLoading}
+                disabled={addFAQMutation.isLoading}
               >
-                {addFAQMutation.isLoading || updateFAQMutation.isLoading ? 'Saving...' : 'Save FAQ'}
+                {addFAQMutation.isLoading ? <FaSpinner className="ali-spinner" /> : 'Save FAQ'}
               </button>
               <button 
                 type="button" 
                 className="ali-btn ali-btn-secondary"
-                onClick={isEditingFAQ ? cancelEditing : () => setIsAddingFAQ(false)}
+                onClick={() => setIsAddingFAQ(false)}
               >
                 Cancel
               </button>
@@ -1937,7 +2288,7 @@ const FAQsPage = () => {
             <div className="ali-faq-question">
               <h4>{faq.question}</h4>
               <div className="ali-faq-meta">
-                <span className={`ali-category-tag ${faq.category.toLowerCase()}`}>
+                <span className={`ali-category-tag ${faq.category.toLowerCase().replace(' ', '-')}`}>
                   {faq.category}
                 </span>
                 <span className={`ali-status-tag ${faq.status}`}>
@@ -1951,300 +2302,23 @@ const FAQsPage = () => {
             <div className="ali-faq-actions">
               <button 
                 className="ali-btn ali-btn-icon"
-                onClick={() => startEditingFAQ(faq)}
+                onClick={() => {
+                  setFaqForm({
+                    question: faq.question,
+                    answer: faq.answer,
+                    category: faq.category,
+                    status: faq.status
+                  });
+                  setIsAddingFAQ(true);
+                }}
               >
-                <i className="fas fa-edit"></i>
+                <FaEdit />
               </button>
               <button 
                 className="ali-btn ali-btn-icon ali-danger"
                 onClick={() => handleDeleteFAQ(faq.id)}
               >
-                <i className="fas fa-trash"></i>
-              </button>
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-};
-
-// Health Hub Page Component
-const HealthHubPage = () => {
-  const queryClient = useQueryClient();
-  const [searchTerm, setSearchTerm] = useState('');
-  const [categoryFilter, setCategoryFilter] = useState('all');
-  const [statusFilter, setStatusFilter] = useState('all');
-  const [isAddingResource, setIsAddingResource] = useState(false);
-  const [isEditingResource, setIsEditingResource] = useState(null);
-  const [resourceForm, setResourceForm] = useState({
-    title: '',
-    category: 'Pregnancy',
-    status: 'draft',
-    content: ''
-  });
-  
-  const { data: resources, isLoading } = useQuery({
-    queryKey: ['healthhub'],
-    queryFn: fetchHealthHub,
-  });
-
-  const deleteResourceMutation = useMutation({
-    mutationFn: (resourceId) => apiRequest('DELETE', `/api/healthhub/${resourceId}`),
-    onSuccess: () => {
-      queryClient.invalidateQueries(['healthhub']);
-    },
-  });
-
-  const addResourceMutation = useMutation({
-    mutationFn: (resourceData) => apiRequest('POST', '/api/healthhub', resourceData),
-    onSuccess: () => {
-      queryClient.invalidateQueries(['healthhub']);
-      setIsAddingResource(false);
-      setResourceForm({
-        title: '',
-        category: 'Pregnancy',
-        status: 'draft',
-        content: ''
-      });
-    },
-  });
-
-  const updateResourceMutation = useMutation({
-    mutationFn: ({ id, resourceData }) => apiRequest('PUT', `/api/healthhub/${id}`, resourceData),
-    onSuccess: () => {
-      queryClient.invalidateQueries(['healthhub']);
-      setIsEditingResource(null);
-    },
-  });
-
-  const handleSearch = (e) => {
-    setSearchTerm(e.target.value);
-  };
-
-  const handleCategoryFilter = (e) => {
-    setCategoryFilter(e.target.value);
-  };
-
-  const handleStatusFilter = (e) => {
-    setStatusFilter(e.target.value);
-  };
-
-  const handleDeleteResource = (resourceId) => {
-    if (window.confirm('Are you sure you want to delete this resource?')) {
-      deleteResourceMutation.mutate(resourceId);
-    }
-  };
-
-  const handleFormChange = (e) => {
-    const { name, value } = e.target;
-    setResourceForm(prev => ({
-      ...prev,
-      [name]: value
-    }));
-  };
-
-  const handleAddResourceSubmit = (e) => {
-    e.preventDefault();
-    addResourceMutation.mutate(resourceForm);
-  };
-
-  const handleEditResourceSubmit = (e) => {
-    e.preventDefault();
-    updateResourceMutation.mutate({ id: isEditingResource.id, resourceData: resourceForm });
-  };
-
-  const startEditingResource = (resource) => {
-    setIsEditingResource(resource);
-    setResourceForm({
-      title: resource.title,
-      category: resource.category,
-      status: resource.status,
-      content: resource.content || ''
-    });
-  };
-
-  const cancelEditing = () => {
-    setIsEditingResource(null);
-    setResourceForm({
-      title: '',
-      category: 'Pregnancy',
-      status: 'draft',
-      content: ''
-    });
-  };
-
-  const filteredResources = resources?.filter(resource => {
-    const matchesSearch = resource.title.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCategory = categoryFilter === 'all' || resource.category === categoryFilter;
-    const matchesStatus = statusFilter === 'all' || resource.status === statusFilter;
-    
-    return matchesSearch && matchesCategory && matchesStatus;
-  });
-
-  if (isLoading) {
-    return (
-      <div className="ali-page-content">
-        <div className="ali-loading-spinner"></div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="ali-page-content">
-      <div className="ali-page-header">
-        <h2>Health Hub Resources</h2>
-        <div className="ali-page-subtitle">
-          Manage educational resources for patients
-        </div>
-      </div>
-
-      <div className="ali-resource-tools">
-        <div className="ali-search-filter">
-          <input
-            type="text"
-            placeholder="Search resources..."
-            value={searchTerm}
-            onChange={handleSearch}
-          />
-          <i className="fas fa-search"></i>
-        </div>
-
-        <div className="ali-filter-group">
-          <label>Category:</label>
-          <select value={categoryFilter} onChange={handleCategoryFilter}>
-            <option value="all">All Categories</option>
-            <option value="Pregnancy">Pregnancy</option>
-            <option value="Postpartum">Postpartum</option>
-            <option value="Newborn Care">Newborn Care</option>
-          </select>
-        </div>
-
-        <div className="ali-filter-group">
-          <label>Status:</label>
-          <select value={statusFilter} onChange={handleStatusFilter}>
-            <option value="all">All Statuses</option>
-            <option value="published">Published</option>
-            <option value="draft">Draft</option>
-          </select>
-        </div>
-
-        <button 
-          className="ali-btn ali-btn-primary"
-          onClick={() => setIsAddingResource(true)}
-        >
-          <i className="fas fa-plus"></i>
-          New Resource
-        </button>
-      </div>
-
-      {(isAddingResource || isEditingResource) && (
-        <div className="ali-add-resource-form">
-          <h3>{isEditingResource ? 'Edit Resource' : 'Add New Resource'}</h3>
-          <form onSubmit={isEditingResource ? handleEditResourceSubmit : handleAddResourceSubmit}>
-            <div className="ali-form-group">
-              <label>Title</label>
-              <input
-                type="text"
-                name="title"
-                value={resourceForm.title}
-                onChange={handleFormChange}
-                required
-              />
-            </div>
-            <div className="ali-form-row">
-              <div className="ali-form-group">
-                <label>Category</label>
-                <select
-                  name="category"
-                  value={resourceForm.category}
-                  onChange={handleFormChange}
-                >
-                  <option value="Pregnancy">Pregnancy</option>
-                  <option value="Postpartum">Postpartum</option>
-                  <option value="Newborn Care">Newborn Care</option>
-                </select>
-              </div>
-              <div className="ali-form-group">
-                <label>Status</label>
-                <select
-                  name="status"
-                  value={resourceForm.status}
-                  onChange={handleFormChange}
-                >
-                  <option value="draft">Draft</option>
-                  <option value="published">Published</option>
-                </select>
-              </div>
-            </div>
-            <div className="ali-form-group">
-              <label>Content</label>
-              <textarea
-                name="content"
-                value={resourceForm.content}
-                onChange={handleFormChange}
-                rows="10"
-                required
-              />
-            </div>
-            <div className="ali-form-actions">
-              <button 
-                type="submit" 
-                className="ali-btn ali-btn-primary"
-                disabled={addResourceMutation.isLoading || updateResourceMutation.isLoading}
-              >
-                {addResourceMutation.isLoading || updateResourceMutation.isLoading ? 'Saving...' : 'Save Resource'}
-              </button>
-              <button 
-                type="button" 
-                className="ali-btn ali-btn-secondary"
-                onClick={isEditingResource ? cancelEditing : () => setIsAddingResource(false)}
-              >
-                Cancel
-              </button>
-            </div>
-          </form>
-        </div>
-      )}
-
-      <div className="ali-resource-grid">
-        {filteredResources?.map(resource => (
-          <div className="ali-resource-card" key={resource.id}>
-            <div className="ali-resource-header">
-              <h3>{resource.title}</h3>
-              <span className={`ali-status-badge ${resource.status}`}>
-                {resource.status}
-              </span>
-            </div>
-            <div className="ali-resource-meta">
-              <span className={`ali-category-badge ${resource.category.toLowerCase()}`}>
-                {resource.category}
-              </span>
-              <span className="ali-last-updated">
-                Updated: {resource.lastUpdated}
-              </span>
-            </div>
-            <div className="ali-resource-preview">
-              {resource.content.substring(0, 150)}...
-            </div>
-            <div className="ali-resource-actions">
-              <button 
-                className="ali-btn ali-btn-icon"
-                onClick={() => startEditingResource(resource)}
-              >
-                <i className="fas fa-edit"></i>
-              </button>
-              <button 
-                className="ali-btn ali-btn-icon"
-                onClick={() => console.log('View resource', resource.id)}
-              >
-                <i className="fas fa-eye"></i>
-              </button>
-              <button 
-                className="ali-btn ali-btn-icon ali-danger"
-                onClick={() => handleDeleteResource(resource.id)}
-              >
-                <i className="fas fa-trash"></i>
+                <FaTrash />
               </button>
             </div>
           </div>
@@ -2272,15 +2346,69 @@ const SMSRemindersPage = () => {
     queryFn: fetchSMSReminders,
   });
 
+  const { data: users } = useQuery({
+    queryKey: ['users'],
+    queryFn: fetchUsers,
+  });
+
   const deleteReminderMutation = useMutation({
-    mutationFn: (reminderId) => apiRequest('DELETE', `/api/sms-reminders/${reminderId}`),
+    mutationFn: (reminderId) => {
+      const reminders = JSON.parse(localStorage.getItem('smsReminders') || '[]');
+      const updatedReminders = reminders.filter(r => r.id !== reminderId);
+      localStorage.setItem('smsReminders', JSON.stringify(updatedReminders));
+      
+      // Add notification
+      const notifications = JSON.parse(localStorage.getItem('adminNotifications') || '[]');
+      const deletedReminder = reminders.find(r => r.id === reminderId);
+      if (deletedReminder) {
+        notifications.unshift({
+          id: Date.now(),
+          title: "SMS Reminder Deleted",
+          message: `Reminder for ${deletedReminder.patientName} was removed`,
+          time: new Date().toISOString(),
+          unread: true,
+          icon: 'trash'
+        });
+        localStorage.setItem('adminNotifications', JSON.stringify(notifications));
+      }
+      
+      return Promise.resolve();
+    },
     onSuccess: () => {
       queryClient.invalidateQueries(['sms-reminders']);
     },
   });
 
   const sendReminderMutation = useMutation({
-    mutationFn: (reminderData) => apiRequest('POST', '/api/sms-reminders', reminderData),
+    mutationFn: (reminderData) => {
+      const reminders = JSON.parse(localStorage.getItem('smsReminders') || '[]');
+      const patient = users?.find(u => u.id.toString() === reminderData.patientId);
+      const newReminder = {
+        id: Date.now(),
+        patientId: reminderData.patientId,
+        patientName: patient ? `${patient.firstName} ${patient.lastName}` : 'Unknown',
+        phone: patient?.phone || '',
+        message: reminderData.message,
+        status: 'scheduled',
+        dateSent: `${reminderData.sendDate}T${reminderData.sendTime}:00Z`
+      };
+      reminders.push(newReminder);
+      localStorage.setItem('smsReminders', JSON.stringify(reminders));
+      
+      // Add notification
+      const notifications = JSON.parse(localStorage.getItem('adminNotifications') || '[]');
+      notifications.unshift({
+        id: Date.now(),
+        title: "SMS Reminder Scheduled",
+        message: `Reminder sent to ${newReminder.patientName}: ${newReminder.message}`,
+        time: new Date().toISOString(),
+        unread: true,
+        icon: 'bell'
+      });
+      localStorage.setItem('adminNotifications', JSON.stringify(notifications));
+      
+      return Promise.resolve(newReminder);
+    },
     onSuccess: () => {
       queryClient.invalidateQueries(['sms-reminders']);
       setIsSendingReminder(false);
@@ -2294,7 +2422,28 @@ const SMSRemindersPage = () => {
   });
 
   const resendReminderMutation = useMutation({
-    mutationFn: (reminderId) => apiRequest('POST', `/api/sms-reminders/${reminderId}/resend`),
+    mutationFn: (reminderId) => {
+      const reminders = JSON.parse(localStorage.getItem('smsReminders') || '[]');
+      const reminder = reminders.find(r => r.id === reminderId);
+      if (reminder) {
+        reminder.status = 'delivered';
+        reminder.dateSent = new Date().toISOString();
+        localStorage.setItem('smsReminders', JSON.stringify(reminders));
+        
+        // Add notification
+        const notifications = JSON.parse(localStorage.getItem('adminNotifications') || '[]');
+        notifications.unshift({
+          id: Date.now(),
+          title: "SMS Reminder Resent",
+          message: `Reminder resent to ${reminder.patientName}: ${reminder.message}`,
+          time: new Date().toISOString(),
+          unread: true,
+          icon: 'redo'
+        });
+        localStorage.setItem('adminNotifications', JSON.stringify(notifications));
+      }
+      return Promise.resolve();
+    },
     onSuccess: () => {
       queryClient.invalidateQueries(['sms-reminders']);
     },
@@ -2349,6 +2498,8 @@ const SMSRemindersPage = () => {
     );
   }
 
+  const patients = users?.filter(user => user.role === 'patient');
+
   return (
     <div className="ali-page-content">
       <div className="ali-page-header">
@@ -2366,7 +2517,7 @@ const SMSRemindersPage = () => {
             value={searchTerm}
             onChange={handleSearch}
           />
-          <i className="fas fa-search"></i>
+          <FaSearch />
         </div>
 
         <div className="ali-filter-group">
@@ -2383,7 +2534,7 @@ const SMSRemindersPage = () => {
           className="ali-btn ali-btn-primary"
           onClick={() => setIsSendingReminder(true)}
         >
-          <i className="fas fa-plus"></i>
+          <FaPlus />
           New Reminder
         </button>
       </div>
@@ -2393,14 +2544,20 @@ const SMSRemindersPage = () => {
           <h3>Send New SMS Reminder</h3>
           <form onSubmit={handleSendReminderSubmit}>
             <div className="ali-form-group">
-              <label>Patient ID</label>
-              <input
-                type="text"
+              <label>Patient</label>
+              <select
                 name="patientId"
                 value={newReminder.patientId}
                 onChange={handleNewReminderChange}
                 required
-              />
+              >
+                <option value="">Select Patient</option>
+                {patients?.map(patient => (
+                  <option key={patient.id} value={patient.id}>
+                    {patient.firstName} {patient.lastName} ({patient.phone})
+                  </option>
+                ))}
+              </select>
             </div>
             <div className="ali-form-group">
               <label>Message</label>
@@ -2440,7 +2597,7 @@ const SMSRemindersPage = () => {
                 className="ali-btn ali-btn-primary"
                 disabled={sendReminderMutation.isLoading}
               >
-                {sendReminderMutation.isLoading ? 'Sending...' : 'Send Reminder'}
+                {sendReminderMutation.isLoading ? <FaSpinner className="ali-spinner" /> : 'Send Reminder'}
               </button>
               <button 
                 type="button" 
@@ -2490,14 +2647,14 @@ const SMSRemindersPage = () => {
                       onClick={() => handleResendReminder(reminder.id)}
                       disabled={reminder.status !== 'failed' || resendReminderMutation.isLoading}
                     >
-                      <i className="fas fa-redo"></i>
+                      <FaRedo />
                     </button>
                     <button 
                       className="ali-btn ali-btn-icon ali-danger" 
                       title="Delete"
                       onClick={() => handleDeleteReminder(reminder.id)}
                     >
-                      <i className="fas fa-trash"></i>
+                      <FaTrash />
                     </button>
                   </div>
                 </td>
@@ -2523,7 +2680,32 @@ const EmergencyLogsPage = () => {
   });
 
   const updateEmergencyStatusMutation = useMutation({
-    mutationFn: ({ id, status }) => apiRequest('PUT', `/api/emergency-logs/${id}`, { status }),
+    mutationFn: ({ id, status }) => {
+      const logs = JSON.parse(localStorage.getItem('emergencyLogs') || '[]');
+      const updatedLogs = logs.map(log => 
+        log.id === id ? { ...log, status } : log
+      );
+      localStorage.setItem('emergencyLogs', JSON.stringify(updatedLogs));
+      
+      // Add notification if resolved
+      if (status === 'resolved') {
+        const notifications = JSON.parse(localStorage.getItem('adminNotifications') || '[]');
+        const logEntry = logs.find(l => l.id === id);
+        if (logEntry) {
+          notifications.unshift({
+            id: Date.now(),
+            title: "Emergency Resolved",
+            message: `Emergency case for ${logEntry.patientName} (${logEntry.type}) has been resolved`,
+            time: new Date().toISOString(),
+            unread: true,
+            icon: 'check'
+          });
+          localStorage.setItem('adminNotifications', JSON.stringify(notifications));
+        }
+      }
+      
+      return Promise.resolve();
+    },
     onSuccess: () => {
       queryClient.invalidateQueries(['emergency-logs']);
     },
@@ -2579,7 +2761,7 @@ const EmergencyLogsPage = () => {
             value={searchTerm}
             onChange={handleSearch}
           />
-          <i className="fas fa-search"></i>
+          <FaSearch />
         </div>
 
         <div className="ali-filter-group">
@@ -2626,7 +2808,7 @@ const EmergencyLogsPage = () => {
               </div>
             </div>
             <div className="ali-emergency-type">
-              <i className="fas fa-exclamation-triangle"></i>
+              <FaExclamationTriangle />
               <span>{log.type}</span>
             </div>
             <div className="ali-emergency-notes">
@@ -2634,13 +2816,13 @@ const EmergencyLogsPage = () => {
             </div>
             <div className="ali-emergency-actions">
               <button className="ali-btn ali-btn-icon">
-                <i className="fas fa-edit"></i>
+                <FaEdit />
               </button>
               <button className="ali-btn ali-btn-icon">
-                <i className="fas fa-file-medical"></i>
+                <FaFileMedical />
               </button>
               <button className="ali-btn ali-btn-icon ali-danger">
-                <i className="fas fa-trash"></i>
+                <FaTrash />
               </button>
             </div>
           </div>
@@ -2661,19 +2843,35 @@ const SettingsPage = () => {
   const [formData, setFormData] = useState({});
   const [isEditing, setIsEditing] = useState(false);
 
-  const updateSettingsMutation = useMutation({
-    mutationFn: (settingsData) => apiRequest('PUT', '/api/settings', settingsData),
-    onSuccess: () => {
-      queryClient.invalidateQueries(['settings']);
-      setIsEditing(false);
-    },
-  });
-
   useEffect(() => {
     if (settings) {
       setFormData(settings);
     }
   }, [settings]);
+
+  const updateSettingsMutation = useMutation({
+    mutationFn: (settingsData) => {
+      localStorage.setItem('settings', JSON.stringify(settingsData));
+      
+      // Add notification
+      const notifications = JSON.parse(localStorage.getItem('adminNotifications') || '[]');
+      notifications.unshift({
+        id: Date.now(),
+        title: "Settings Updated",
+        message: "System settings have been modified",
+        time: new Date().toISOString(),
+        unread: true,
+        icon: 'cog'
+      });
+      localStorage.setItem('adminNotifications', JSON.stringify(notifications));
+      
+      return Promise.resolve();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(['settings']);
+      setIsEditing(false);
+    },
+  });
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -2816,7 +3014,7 @@ const SettingsPage = () => {
                 className="ali-btn ali-btn-primary"
                 onClick={() => setIsEditing(true)}
               >
-                <i className="fas fa-edit"></i>
+                <FaEdit />
                 Edit Settings
               </button>
             ) : (
@@ -2826,7 +3024,7 @@ const SettingsPage = () => {
                   className="ali-btn ali-btn-primary"
                   disabled={updateSettingsMutation.isLoading}
                 >
-                  <i className="fas fa-save"></i>
+                  <FaSave />
                   {updateSettingsMutation.isLoading ? 'Saving...' : 'Save Changes'}
                 </button>
                 <button 
@@ -2838,7 +3036,7 @@ const SettingsPage = () => {
                   }}
                   disabled={updateSettingsMutation.isLoading}
                 >
-                  <i className="fas fa-times"></i>
+                  <FaTimes />
                   Cancel
                 </button>
               </>
@@ -2865,25 +3063,25 @@ const DashboardHome = () => {
 
   const quickActions = [
     {
-      icon: "fas fa-user-plus",
+      icon: <FaUserPlus />,
       title: "Add New Patient",
       description: "Register a new patient",
       action: () => console.log('Navigate to add patient')
     },
     {
-      icon: "fas fa-calendar-plus",
+      icon: <FaCalendarPlus />,
       title: "Schedule Appointment",
       description: "Book a new appointment",
       action: () => console.log('Navigate to schedule appointment')
     },
     {
-      icon: "fas fa-ambulance",
+      icon: <FaExclamationTriangle />,
       title: "Emergency Protocol",
       description: "Handle emergency cases",
       action: () => console.log('Navigate to emergency protocol')
     },
     {
-      icon: "fas fa-chart-bar",
+      icon: <FaChartLine />,
       title: "View Reports",
       description: "Generate analytics",
       action: () => console.log('Navigate to analytics')
@@ -2896,11 +3094,11 @@ const DashboardHome = () => {
         <div>
           <h2>Dashboard Overview</h2>
           <div className="ali-page-subtitle">
-            Welcome back, Dr. Johnson! Here's what's happening with your patients today.
+            Welcome back! Here's what's happening with your patients today.
           </div>
         </div>
         <button className="ali-btn ali-btn-primary" onClick={generateReport}>
-          <i className="fas fa-download"></i>
+          <FaDownload />
           Generate Report
         </button>
       </div>
@@ -2910,12 +3108,12 @@ const DashboardHome = () => {
           <div className="ali-stat-card-header">
             <h3>Total Patients</h3>
             <div className="ali-stat-card-icon ali-primary">
-              <i className="fas fa-users"></i>
+              <FaUsers />
             </div>
           </div>
           <div className="ali-value">{stats?.totalPatients.toLocaleString() || 0}</div>
           <div className="ali-change ali-positive">
-            <i className="fas fa-arrow-up"></i>
+            <FaArrowUp />
             <span>+12.5%</span> from last month
           </div>
         </div>
@@ -2923,12 +3121,12 @@ const DashboardHome = () => {
           <div className="ali-stat-card-header">
             <h3>Active Pregnancies</h3>
             <div className="ali-stat-card-icon ali-success">
-              <i className="fas fa-baby"></i>
+              <FaBaby />
             </div>
           </div>
           <div className="ali-value">{stats?.activePregnancies.toLocaleString() || 0}</div>
           <div className="ali-change ali-positive">
-            <i className="fas fa-arrow-up"></i>
+            <FaArrowUp />
             <span>+8.3%</span> from last month
           </div>
         </div>
@@ -2936,12 +3134,12 @@ const DashboardHome = () => {
           <div className="ali-stat-card-header">
             <h3>Today's Appointments</h3>
             <div className="ali-stat-card-icon ali-warning">
-              <i className="fas fa-calendar-check"></i>
+              <FaCalendarCheck />
             </div>
           </div>
           <div className="ali-value">{stats?.todayAppointments.toLocaleString() || 0}</div>
           <div className="ali-change ali-negative">
-            <i className="fas fa-arrow-down"></i>
+            <FaArrowDown />
             <span>-3.1%</span> from last month
           </div>
         </div>
@@ -2949,12 +3147,12 @@ const DashboardHome = () => {
           <div className="ali-stat-card-header">
             <h3>Emergency Alerts</h3>
             <div className="ali-stat-card-icon ali-info">
-              <i className="fas fa-exclamation-triangle"></i>
+              <FaExclamationTriangle />
             </div>
           </div>
           <div className="ali-value">{stats?.emergencyAlerts.toLocaleString() || 0}</div>
           <div className="ali-change ali-positive">
-            <i className="fas fa-arrow-up"></i>
+            <FaArrowUp />
             <span>-25%</span> from last month
           </div>
         </div>
@@ -2968,7 +3166,7 @@ const DashboardHome = () => {
             onClick={action.action}
           >
             <div className="ali-quick-action-icon">
-              <i className={action.icon}></i>
+              {action.icon}
             </div>
             <div className="ali-quick-action-title">{action.title}</div>
             <div className="ali-quick-action-desc">{action.description}</div>
@@ -2980,7 +3178,7 @@ const DashboardHome = () => {
         <div className="ali-card-header">
           <h3>Today's Appointments</h3>
           <button className="ali-btn ali-btn-primary">
-            <i className="fas fa-eye"></i>
+            <FaEye />
             View All
           </button>
         </div>
@@ -2999,12 +3197,12 @@ const DashboardHome = () => {
             <tbody>
               {fetchAppointments()
                 .filter(appt => appt.date === new Date().toISOString().split('T')[0])
-                .sort((a, b) => a.appointmentTime.localeCompare(b.appointmentTime))
+                .sort((a, b) => a.time.localeCompare(b.time))
                 .slice(0, 5)
                 .map((appointment) => (
                   <tr key={appointment.id}>
                     <td>{appointment.patientName}</td>
-                    <td>{appointment.appointmentTime}</td>
+                    <td>{appointment.time}</td>
                     <td>{appointment.type}</td>
                     <td>{appointment.doctorName}</td>
                     <td>
@@ -3031,7 +3229,7 @@ const DashboardHome = () => {
         <div className="ali-card-header">
           <h3>Recent Patient Registrations</h3>
           <button className="ali-btn ali-btn-primary">
-            <i className="fas fa-users"></i>
+            <FaUsers />
             Manage Users
           </button>
         </div>
@@ -3050,13 +3248,13 @@ const DashboardHome = () => {
             <tbody>
               {fetchUsers()
                 .filter(user => user.role === 'patient')
-                .sort((a, b) => new Date(b.registrationDate) - new Date(a.registrationDate))
+                .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
                 .slice(0, 5)
                 .map((user) => (
                   <tr key={user.id}>
-                    <td>{user.fullName}</td>
+                    <td>{user.firstName} {user.lastName}</td>
                     <td>{user.email}</td>
-                    <td>{new Date(user.registrationDate).toLocaleDateString()}</td>
+                    <td>{new Date(user.createdAt).toLocaleDateString()}</td>
                     <td>{user.phone || 'N/A'}</td>
                     <td>
                       <span className={`ali-status ${user.status}`}>
@@ -3066,9 +3264,6 @@ const DashboardHome = () => {
                     <td>
                       <button className="ali-action-btn ali-view">
                         View
-                      </button>
-                      <button className="ali-action-btn ali-edit">
-                        Edit
                       </button>
                     </td>
                   </tr>
@@ -3082,7 +3277,7 @@ const DashboardHome = () => {
         <h3>Patient Statistics Overview</h3>
         <div className="ali-chart-placeholder">
           <div style={{ textAlign: 'center' }}>
-            <i className="fas fa-chart-area"></i>
+            <FaChartArea />
             <p>Interactive Analytics Chart</p>
             <div style={{ fontSize: '0.9rem', opacity: '0.7', marginTop: '5px' }}>
               Patient registrations, appointments, and health metrics over time
@@ -3100,26 +3295,25 @@ const AdminSidebar = ({ isCollapsed, toggleCollapse, user, activePage, setActive
     {
       section: "Main",
       items: [
-        { key: "dashboard", icon: "fas fa-home", label: "Dashboard" },
-        { key: "analytics", icon: "fas fa-chart-line", label: "Analytics" }
+        { key: "dashboard", icon: <FaHome />, label: "Dashboard" },
+        { key: "analytics", icon: <FaChartLine />, label: "Analytics" }
       ]
     },
     {
       section: "Content Management",
       items: [
-        { key: "users", icon: "fas fa-users", label: "User Management" },
-        { key: "appointments", icon: "fas fa-calendar-check", label: "Appointments", badge: fetchStats().todayAppointments },
-        { key: "blog", icon: "fas fa-newspaper", label: "Blog" },
-        { key: "faqs", icon: "fas fa-question-circle", label: "FAQs" },
-        { key: "healthhub", icon: "fas fa-book", label: "Health Hub" },
-        { key: "sms-reminders", icon: "fas fa-bell", label: "SMS Reminders" },
-        { key: "emergency-logs", icon: "fas fa-exclamation-triangle", label: "Emergency Logs", badge: fetchStats().emergencyAlerts }
+        { key: "users", icon: <FaUsers />, label: "User Management" },
+        { key: "appointments", icon: <FaCalendarCheck />, label: "Appointments", badge: fetchStats().todayAppointments },
+        { key: "blog", icon: <FaNewspaper />, label: "Blog" },
+        { key: "faqs", icon: <FaQuestionCircle />, label: "FAQs" },
+        { key: "sms-reminders", icon: <FaBell />, label: "SMS Reminders" },
+        { key: "emergency-logs", icon: <FaExclamationTriangle />, label: "Emergency Logs", badge: fetchStats().emergencyAlerts }
       ]
     },
     {
       section: "System",
       items: [
-        { key: "settings", icon: "fas fa-cog", label: "Settings" }
+        { key: "settings", icon: <FaCogs />, label: "Settings" }
       ]
     }
   ];
@@ -3127,27 +3321,33 @@ const AdminSidebar = ({ isCollapsed, toggleCollapse, user, activePage, setActive
   return (
     <div className={`ali-sidebar ${isCollapsed ? 'ali-collapsed' : ''}`}>
       <div className="ali-sidebar-header">
-        <h3>Pregvita Health Tracker</h3>
-        <i 
-          className="fas fa-bars ali-toggle-btn" 
+        <h3>Pregvita</h3>
+        <div 
+          className="ali-toggle-btn" 
           onClick={toggleCollapse}
-        ></i>
+        >
+          <FaBars />
+        </div>
       </div>
       
       <div className="ali-sidebar-menu">
         {menuItems.map((section, sectionIndex) => (
           <div key={sectionIndex}>
-            <h4>{section.section}</h4>
+            {!isCollapsed && <h4>{section.section}</h4>}
             <ul>
               {section.items.map((item, itemIndex) => (
                 <li key={itemIndex}>
                   <div 
-                    className={`${activePage === item.key ? 'ali-active' : ''}`}
+                    className={`ali-menu-item ${activePage === item.key ? 'ali-active' : ''}`}
                     onClick={() => setActivePage(item.key)}
                   >
-                    <i className={item.icon}></i>
-                    <span>{item.label}</span>
-                    {item.badge && <span className="ali-badge">{item.badge}</span>}
+                    <div className="ali-menu-icon">{item.icon}</div>
+                    {!isCollapsed && (
+                      <>
+                        <span>{item.label}</span>
+                        {item.badge && <span className="ali-badge">{item.badge}</span>}
+                      </>
+                    )}
                   </div>
                 </li>
               ))}
@@ -3159,10 +3359,12 @@ const AdminSidebar = ({ isCollapsed, toggleCollapse, user, activePage, setActive
       <div className="ali-sidebar-footer">
         <div className="ali-user-profile">
           <img src={user?.avatar} alt="User Profile" />
-          <div>
-            <div className="ali-user-name">{user?.name}</div>
-            <div className="ali-user-role">{user?.role}</div>
-          </div>
+          {!isCollapsed && (
+            <div>
+              <div className="ali-user-name">{user?.firstName} {user?.lastName}</div>
+              <div className="ali-user-role">{user?.role}</div>
+            </div>
+          )}
         </div>
       </div>
     </div>
@@ -3202,12 +3404,12 @@ const AdminTopNav = ({ user, logout, toggleNotifications, notificationCount }) =
           onChange={handleSearch}
           onKeyPress={handleKeyPress}
         />
-        <i className="fas fa-search"></i>
+        <FaSearch />
       </div>
       
       <div className="ali-user-actions">
         <div className="ali-notification-bell" onClick={toggleNotifications}>
-          <i className="fas fa-bell"></i>
+          <FaBell />
           {notificationCount > 0 && (
             <span className="ali-notification-badge">{notificationCount}</span>
           )}
@@ -3215,22 +3417,22 @@ const AdminTopNav = ({ user, logout, toggleNotifications, notificationCount }) =
         
         <div className="ali-user-profile" onClick={handleUserMenuToggle}>
           <img src={user?.avatar} alt="Admin Profile" />
-          <span>{user?.name}</span>
-          <i className={`fas fa-chevron-${showUserMenu ? 'up' : 'down'}`}></i>
+          <span>{user?.firstName} {user?.lastName}</span>
+          {showUserMenu ? <FaChevronUp /> : <FaChevronDown />}
           
           {showUserMenu && (
             <div className="ali-user-menu">
               <div className="ali-menu-item">
-                <i className="fas fa-user"></i>
+                <FaUser />
                 <span>My Profile</span>
               </div>
               <div className="ali-menu-item">
-                <i className="fas fa-cog"></i>
+                <FaCog />
                 <span>Settings</span>
               </div>
               <div className="ali-menu-divider"></div>
               <div className="ali-menu-item" onClick={logout}>
-                <i className="fas fa-sign-out-alt"></i>
+                <FaSignOutAlt />
                 <span>Logout</span>
               </div>
             </div>
@@ -3251,7 +3453,7 @@ const NotificationsPanel = ({ isOpen, notifications, markAsRead, closePanel }) =
         <h3>Notifications</h3>
         <div className="ali-panel-actions">
           <button onClick={markAsRead}>Mark all as read</button>
-          <i className="fas fa-times" onClick={closePanel}></i>
+          <FaTimes onClick={closePanel} />
         </div>
       </div>
       <div className="ali-notifications-list">
@@ -3259,18 +3461,33 @@ const NotificationsPanel = ({ isOpen, notifications, markAsRead, closePanel }) =
           notifications.map((notification, index) => (
             <div key={index} className={`ali-notification-item ${notification.unread ? 'ali-unread' : ''}`}>
               <div className="ali-notification-icon">
-                <i className={`fas fa-${notification.icon || 'bell'}`}></i>
+                {notification.icon === 'user-plus' && <FaUserPlus />}
+                {notification.icon === 'calendar-check' && <FaCalendarCheck />}
+                {notification.icon === 'exclamation-triangle' && <FaExclamationTriangle />}
+                {notification.icon === 'flask' && <FaFlask />}
+                {notification.icon === 'download' && <FaDownload />}
+                {notification.icon === 'user-slash' && <FaUserSlash />}
+                {notification.icon === 'calendar-times' && <FaCalendarTimes />}
+                {notification.icon === 'redo' && <FaRedo />}
+                {notification.icon === 'edit' && <FaEdit />}
+                {notification.icon === 'trash' && <FaTrash />}
+                {notification.icon === 'question-circle' && <FaQuestionCircle />}
+                {notification.icon === 'bell' && <FaBell />}
+                {notification.icon === 'check' && <FaCheck />}
+                {!notification.icon && <FaBell />}
               </div>
               <div className="ali-notification-content">
                 <div className="ali-notification-title">{notification.title}</div>
                 <div className="ali-notification-message">{notification.message}</div>
-                <div className="ali-notification-time">{notification.time}</div>
+                <div className="ali-notification-time">
+                  {new Date(notification.time).toLocaleString()}
+                </div>
               </div>
             </div>
           ))
         ) : (
           <div className="ali-no-notifications">
-            <i className="fas fa-bell-slash"></i>
+            <FaBellSlash />
             <p>No new notifications</p>
           </div>
         )}
@@ -3290,52 +3507,24 @@ const Admin = () => {
   const [showLoginModal, setShowLoginModal] = useState(!isAuthenticated);
   const [activePage, setActivePage] = useState('dashboard');
 
-  // Mock notifications data
+  // Load user and notifications
   useEffect(() => {
-    const mockNotifications = [
-      {
-        id: 1,
-        title: "New Patient Registration",
-        message: "Maria Rodriguez has registered as a new patient",
-        time: "10 mins ago",
-        icon: "user-plus",
-        unread: true
-      },
-      {
-        id: 2,
-        title: "Appointment Reminder",
-        message: "Jennifer Kim has an appointment tomorrow at 9:30 AM",
-        time: "25 mins ago",
-        icon: "calendar-check",
-        unread: true
-      },
-      {
-        id: 3,
-        title: "Emergency Alert",
-        message: "High priority emergency case reported by Sarah Thompson",
-        time: "1 hour ago",
-        icon: "exclamation-triangle",
-        unread: true
-      },
-      {
-        id: 4,
-        title: "Lab Results Ready",
-        message: "Lab results for Emily Davis are ready for review",
-        time: "2 hours ago",
-        icon: "flask",
-        unread: false
-      },
-      {
-        id: 5,
-        title: "System Update",
-        message: "New system update available for installation",
-        time: "5 hours ago",
-        icon: "download",
-        unread: false
-      }
-    ];
-    setNotifications(mockNotifications);
-    setNotificationCount(mockNotifications.filter(n => n.unread).length);
+    const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+    if (currentUser) {
+      setUser(currentUser);
+    }
+
+    const loadNotifications = () => {
+      const loadedNotifications = fetchNotifications();
+      setNotifications(loadedNotifications);
+      setNotificationCount(loadedNotifications.filter(n => n.unread).length);
+    };
+
+    loadNotifications();
+
+    // Set up interval to check for new notifications
+    const interval = setInterval(loadNotifications, 30000);
+    return () => clearInterval(interval);
   }, []);
 
   const toggleCollapse = () => {
@@ -3350,6 +3539,7 @@ const Admin = () => {
     const updatedNotifications = notifications.map(n => ({ ...n, unread: false }));
     setNotifications(updatedNotifications);
     setNotificationCount(0);
+    localStorage.setItem('adminNotifications', JSON.stringify(updatedNotifications));
   };
 
   const handleLogin = async (credentials) => {
@@ -3381,11 +3571,9 @@ const Admin = () => {
       case 'appointments':
         return <AppointmentsPage />;
       case 'blog':
-        return <BlogPage />;
+        return <BlogPage />; // Use BlogPage component with admin controls
       case 'faqs':
         return <FAQsPage />;
-      case 'healthhub':
-        return <HealthHubPage />;
       case 'sms-reminders':
         return <SMSRemindersPage />;
       case 'emergency-logs':
@@ -3431,12 +3619,13 @@ const Admin = () => {
               closePanel={() => setShowNotifications(false)}
             />
             
-            <div className="ali-content-wrapper">
+            <div className="cumo-content-wrapper">
               {renderActivePage()}
             </div>
           </div>
         </>
-      )}
+      )
+    }
     </div>
   );
 };
