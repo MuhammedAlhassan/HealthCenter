@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import '@fortawesome/fontawesome-free/css/all.min.css'; // Ensure icons load
 import './Footer';
 
@@ -34,10 +35,10 @@ const Footer = () => {
           <div className="footer-section">
             <h4 className="footer-title">Quick Links</h4>
             <ul className="footer-links">
-              <li><a href="/aboutus">About Us</a></li>
-              <li><a href="/privacypolicy">Privacy Policy</a></li>
-              <li><a href="/termsandconditions">Terms And Conditions</a></li>
-              <li><a href="/accessibility">Accessibility</a></li>
+              <li><Link to="/aboutus">About Us</Link></li>
+              <li><Link to="/privacypolicy">Privacy Policy</Link></li>
+              <li><Link to="/termsandconditions">Terms And Conditions</Link></li>
+              <li><Link to="/accessibility">Accessibility</Link></li>
             </ul>
           </div>
           
@@ -45,10 +46,10 @@ const Footer = () => {
           <div className="footer-section">
             <h4 className="footer-title">Support</h4>
             <ul className="footer-links">
-              <li><a href="/contactus">Contact Us</a></li>
-              <li><a href="/services">Services</a></li>
-              <li><a href="/blog">Blog</a></li>
-              <li><a href="/faq">Faq</a></li>
+              <li><Link to="/contactus">Contact Us</Link></li>
+              <li><Link to="/services">Services</Link></li>
+              <li><Link to="/blog">Blog</Link></li>
+              <li><Link to="/faq">Faq</Link></li>
             </ul>
           </div>
         </div>
