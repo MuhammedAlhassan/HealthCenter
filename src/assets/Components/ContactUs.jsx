@@ -59,7 +59,7 @@ import React, { useState } from 'react';
         icon: 'fas fa-headset',
         title: 'Support Hotline',
         value: '+234 816 776 9208',
-        link: 'tel:08167769208'
+        link: 'tel:+2348167769208'
       },
       {
         icon: 'fas fa-map-marker-alt',

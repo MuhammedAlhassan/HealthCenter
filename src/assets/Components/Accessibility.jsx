@@ -178,7 +178,7 @@ const Accessibility = () => {
                 <i className="fas fa-sms"></i> Text: <a href="sms:+2348001234567">+234 816 776 9208</a>
               </p>
               <p>
-                <i className="fas fa-phone-alt"></i> Voice call: <a href="tel:08167769208">0816 776 9208</a>
+                <i className="fas fa-phone-alt"></i> Voice call: <a href="tel:+2348167769208">+234 816 776 9208</a>
               </p>
             </div>
           </div>

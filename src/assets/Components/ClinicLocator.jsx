@@ -285,7 +285,7 @@ const ClinicLocator = () => {
 
   const handleCall = () => {
     const phoneNumber = "+2348167769208";
-    window.open(`tel:08167769208`, '_blank');
+    window.open(`tel:+2348167769208`, '_blank');
   };
 
   return (
