@@ -59,7 +59,7 @@ const Footer = () => {
           <div className="emergency-alert">
             <p className="emergency-text">
               <i className="fas fa-phone"></i>
-              24/7 Emergency Hotline: +234-816-776-9208
+              24/7 Emergency Hotline: <a href="tel:+2348167769208" target="_blank" rel="noopener noreferrer">+234 816 776 9208</a>
             </p>
             <p className="emergency-disclaimer">
               For immediate medical emergencies, call your local emergency services first
