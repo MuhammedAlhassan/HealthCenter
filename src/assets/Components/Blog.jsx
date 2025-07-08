@@ -463,15 +463,15 @@ const Blog = () => {
             <div className="cta-content">
               <h2>Need Immediate Pregnancy Help?</h2>
               <p>
-                Use our emergency SOS feature or text "HELP" to 3432 for urgent assistance
+                Use our emergency SOS feature or text "HELP" to +234 816-776-908 for urgent assistance
               </p>
               <div className="cta-buttons">
-                <button className="btn btn-primary">
+                <a href="/ClinicLocator"><button className="btn btn-primary">
                   Find Nearby Clinics
-                </button>
-                <button className="btn btn-outline">
+                </button></a>
+              <a href="/ContactUs">  <button className="btn btn-outline">
                   Speak to a Midwife
-                </button>
+                </button></a>
               </div>
             </div>
           </section>

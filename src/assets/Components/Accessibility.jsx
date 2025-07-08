@@ -18,7 +18,7 @@ const Accessibility = () => {
         <section className="accessibility-statement">
           <h2>Our Promise</h2>
           <p>
-            Maternal Health Tracker is designed to serve <strong>all</strong> Nigerian women, 
+            Pregvita is designed to serve <strong>all</strong> Nigerian women, 
             including those with disabilities and in low-connectivity areas. We prioritize:
           </p>
           <div className="user-groups">

@@ -68,7 +68,7 @@ const AboutUs = () => {
         <div className="hero-content">
           <h1>Saving Mothers' Lives Across Nigeria</h1>
           <p>
-            Maternal Health Tracker is a Nigerian-developed solution providing critical 
+            Pregvita is a Nigerian-developed solution providing critical 
             pregnancy support through SMS reminders, emergency SOS, and low-bandwidth 
             health information.
           </p>
@@ -89,7 +89,7 @@ const AboutUs = () => {
           <i className="fas fa-bullseye mission-icon"></i>
           <h2>Our Mission</h2>
           <p>
-            Reduce Nigeria's maternal mortality rate by 50% through accessible 
+            Reduce Nigeria's Pregvita mortality rate by 50% through accessible 
             digital tools that work without internet, reaching every pregnant woman 
             even in rural communities.
           </p>
